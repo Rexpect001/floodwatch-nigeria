@@ -158,6 +158,7 @@ services:
         value: "info"
 
   # ── 4. Alert Router (Background Worker) ──────────────────────────
+  # Consumes from Redis Stream 'alerts:voice:approved' (no RabbitMQ needed)
   - type: worker
     name: floodwatch-alert-router
     runtime: docker

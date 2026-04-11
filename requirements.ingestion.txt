@@ -14,7 +14,7 @@ aiohttp==3.10.5                # GloFAS CDS API uses aiohttp-style sessions
 
 # Cache & messaging
 redis[hiredis]==5.0.8
-aio-pika==9.4.3                # RabbitMQ async client (AMQP 0-9-1)
+# aio-pika removed — alert_router now uses Redis Streams (no RabbitMQ needed)
 
 # SMS / Voice dispatch
 africastalking==1.2.8          # Africa's Talking SMS + Voice
