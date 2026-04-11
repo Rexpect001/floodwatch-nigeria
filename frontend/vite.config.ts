@@ -47,8 +47,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          // Keep mapbox in its own chunk — it's large (~800KB)
-          mapbox: ['mapbox-gl'],
+          leaflet: ['leaflet', 'react-leaflet'],
           vendor: ['react', 'react-dom', 'react-router-dom', 'i18next', 'react-i18next'],
           query: ['@tanstack/react-query'],
         },
@@ -56,8 +55,7 @@ export default defineConfig({
     },
   },
 
-  // Allow Mapbox GL worker imports
   optimizeDeps: {
-    exclude: ['mapbox-gl'],
+    include: ['leaflet', 'react-leaflet'],
   },
 })
