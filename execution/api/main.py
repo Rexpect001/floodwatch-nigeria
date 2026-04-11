@@ -13,10 +13,37 @@ from .db import init_db, close_db, init_redis, close_redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: create DB pool + warm Redis
-    await init_db()
-    redis = init_redis()
-    await redis.ping()
+    # Startup: connect to DB + Redis with retries so health check
+    # can respond even if backing services aren't ready immediately.
+    import asyncio
+    import logging
+    logger = logging.getLogger("startup")
+
+    for attempt in range(1, 6):
+        try:
+            await init_db()
+            logger.info("Database pool ready")
+            break
+        except Exception as exc:
+            logger.warning(f"DB connect attempt {attempt}/5 failed: {exc}")
+            if attempt == 5:
+                logger.error("DB unavailable at startup — continuing without pool")
+            else:
+                await asyncio.sleep(attempt * 2)
+
+    for attempt in range(1, 4):
+        try:
+            redis = init_redis()
+            await redis.ping()
+            logger.info("Redis ready")
+            break
+        except Exception as exc:
+            logger.warning(f"Redis connect attempt {attempt}/3 failed: {exc}")
+            if attempt == 3:
+                logger.error("Redis unavailable at startup — continuing without cache")
+            else:
+                await asyncio.sleep(attempt * 2)
+
     yield
     # Shutdown: close all connections cleanly
     await close_db()
