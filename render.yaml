@@ -207,6 +207,7 @@ services:
     plan: starter          # free 25MB → starter $10/month for 50MB persistent
     region: oregon
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []        # [] = internal Render network only (no public access)
 
 databases:
 
