@@ -13,11 +13,61 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { alertsApi, type Alert } from '../../api/alertsApi'
+import { forecastsApi, type CurrentWeather } from '../../api/forecastsApi'
 import type { SupportedLang } from '../../i18n'
 
 interface Props { lang: SupportedLang }
 
 const SEVERITY_ORDER = ['RED', 'ORANGE', 'YELLOW', 'GREEN'] as const
+
+// ── Weather Widget ────────────────────────────────────────────
+function WeatherWidget({ lang }: { lang: SupportedLang }) {
+  const LGA_ABUJA = 1  // fallback LGA until geolocation is wired
+  const { data: weather, isLoading } = useQuery<CurrentWeather>({
+    queryKey: ['weather', lang],
+    queryFn: () => forecastsApi.getWeather(LGA_ABUJA, lang),
+    refetchInterval: 15 * 60 * 1000,  // 15 min
+    retry: 1,
+  })
+
+  if (isLoading) return (
+    <div className="weather-widget weather-widget--loading" aria-label="Loading weather">
+      <div className="spinner" aria-hidden style={{ width: 20, height: 20 }} />
+    </div>
+  )
+
+  if (!weather) return null
+
+  return (
+    <div className={`weather-widget ${weather.is_heatwave ? 'weather-widget--heatwave' : ''}`}
+         role="region" aria-label="Current weather">
+      <div className="weather-widget__location">
+        📍 {weather.lga_name}, {weather.state_name}
+      </div>
+      <div className="weather-widget__main">
+        <span className="weather-widget__temp">
+          {weather.temp_c != null ? `${Math.round(weather.temp_c)}°C` : '--'}
+        </span>
+        {weather.is_heatwave && (
+          <span className="weather-widget__heatwave-badge">🔥 HEATWAVE</span>
+        )}
+        <span className="weather-widget__condition">{weather.condition ?? 'N/A'}</span>
+      </div>
+      <div className="weather-widget__stats">
+        {weather.rainfall_mm != null && (
+          <span className="weather-widget__stat">🌧 {weather.rainfall_mm.toFixed(1)}mm</span>
+        )}
+        {weather.humidity_pct != null && (
+          <span className="weather-widget__stat">💧 {weather.humidity_pct}%</span>
+        )}
+        {weather.wind_kmh != null && (
+          <span className="weather-widget__stat">💨 {Math.round(weather.wind_kmh)}km/h</span>
+        )}
+      </div>
+      <div className="weather-widget__source">{weather.data_source_label}</div>
+    </div>
+  )
+}
 
 function AlertBanner({ alert }: { alert: Alert }) {
   const { t } = useTranslation()
@@ -98,6 +148,9 @@ export default function Dashboard({ lang }: Props) {
 
   return (
     <div className="dashboard">
+      {/* Weather widget */}
+      <WeatherWidget lang={lang} />
+
       {/* Critical alert banner */}
       {topAlert && <AlertBanner alert={topAlert} />}
 
@@ -159,7 +212,7 @@ export default function Dashboard({ lang }: Props) {
 
       {/* USSD access hint */}
       <div className="dashboard__ussd-hint">
-        {t('subscribe.ussd_hint')}
+        No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
       </div>
     </div>
   )

@@ -44,9 +44,26 @@ export interface AfoResponse {
   communities: AfoCommunity[]
 }
 
+export interface CurrentWeather {
+  lga_name:        string
+  state_name:      string
+  temp_c:          number | null
+  feels_like_c:    number | null
+  humidity_pct:    number | null
+  rainfall_mm:     number | null
+  wind_kmh:        number | null
+  condition:       string | null
+  is_heatwave:     boolean
+  data_source_label: string
+  last_updated:    string
+}
+
 export const forecastsApi = {
   getFlood: (lgaId: number, params: { days?: number; lang?: SupportedLang } = {}): Promise<FloodForecast> =>
     apiClient.get<FloodForecast>(`/forecasts/flood/${lgaId}`, { params }).then(r => r.data),
+
+  getWeather: (lgaId: number, lang: SupportedLang = 'en'): Promise<CurrentWeather> =>
+    apiClient.get<CurrentWeather>(`/forecasts/weather/${lgaId}`, { params: { lang } }).then(r => r.data),
 
   getAfo: (params: { lang?: SupportedLang; state_code?: string } = {}): Promise<AfoResponse> =>
     apiClient.get<AfoResponse>('/forecasts/afo', { params }).then(r => r.data),

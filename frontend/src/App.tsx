@@ -15,7 +15,7 @@ import React, { Suspense, useState } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import './index.css'
 import { useTranslation } from 'react-i18next'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import './i18n'
 
 import { SUPPORTED_LANGUAGES, type SupportedLang } from './i18n'
@@ -104,11 +104,19 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
 // ── Bottom Tab Bar ───────────────────────────────────────────
 
 function BottomTabBar() {
-  const location = useLocation()
+  const { data: alerts = [] } = useQuery({
+    queryKey: ['alerts-badge'],
+    queryFn: () => import('./api/alertsApi').then(m => m.alertsApi.list()),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  })
+  const redCount = alerts.filter((a: any) => a.severity === 'RED').length
+  const criticalCount = alerts.filter((a: any) => ['RED','ORANGE'].includes(a.severity)).length
+
   const tabs = [
     { to: '/',          icon: '🏠', label: 'Home'     },
     { to: '/map',       icon: '🗺️', label: 'Map'      },
-    { to: '/alerts',    icon: '🚨', label: 'Alerts'   },
+    { to: '/alerts',    icon: '🚨', label: 'Alerts',  badge: criticalCount },
     { to: '/forecast',  icon: '📊', label: 'Forecast' },
     { to: '/subscribe', icon: '📱', label: 'SMS'      },
   ]
@@ -122,11 +130,69 @@ function BottomTabBar() {
           className={({ isActive }) => `footer-tab ${isActive ? 'active' : ''}`}
           aria-label={tab.label}
         >
-          <span className="footer-tab__icon" aria-hidden>{tab.icon}</span>
+          <span className="footer-tab__icon-wrap" aria-hidden>
+            <span className="footer-tab__icon">{tab.icon}</span>
+            {tab.badge != null && tab.badge > 0 && (
+              <span className={`footer-tab__badge ${redCount > 0 ? 'footer-tab__badge--red' : ''}`}>
+                {tab.badge > 99 ? '99+' : tab.badge}
+              </span>
+            )}
+          </span>
           <span>{tab.label}</span>
         </NavLink>
       ))}
     </>
+  )
+}
+
+// ── Voice Pipeline Gate (NEMA officers only) ─────────────────
+
+function VoiceGate() {
+  const [alertId,   setAlertId]   = useState('')
+  const [officerId, setOfficerId] = useState('')
+  const [active,    setActive]    = useState(false)
+
+  if (active && alertId && officerId) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <VoicePipeline
+          alertId={alertId}
+          alertSeverity="RED"
+          officerId={officerId}
+          onClose={() => setActive(false)}
+        />
+      </Suspense>
+    )
+  }
+
+  return (
+    <div style={{ padding: 24, maxWidth: 400, margin: '0 auto' }}>
+      <h2 style={{ marginBottom: 16 }}>🔐 NEMA Officer Access</h2>
+      <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: 20 }}>
+        Voice alert production is restricted to authorised NEMA officers.
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <input
+          className="form-input"
+          placeholder="Alert ID"
+          value={alertId}
+          onChange={e => setAlertId(e.target.value)}
+        />
+        <input
+          className="form-input"
+          placeholder="Officer ID"
+          value={officerId}
+          onChange={e => setOfficerId(e.target.value)}
+        />
+        <button
+          className="btn btn--primary"
+          disabled={!alertId || !officerId}
+          onClick={() => setActive(true)}
+        >
+          Enter Pipeline
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -154,7 +220,15 @@ export default function App() {
     i18n.changeLanguage(newLang)
     localStorage.setItem('floodwatch_lang', newLang)
     document.documentElement.lang = newLang
+    // RTL for Hausa (Arabic script)
+    document.documentElement.dir = newLang === 'ha' ? 'rtl' : 'ltr'
   }
+
+  // Apply RTL on initial load
+  React.useEffect(() => {
+    document.documentElement.dir = lang === 'ha' ? 'rtl' : 'ltr'
+    document.documentElement.lang = lang
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -171,7 +245,7 @@ export default function App() {
                 <Route path="/alerts"    element={<AlertList lang={lang} />} />
                 <Route path="/shelters"  element={<Navigate to="/alerts?tab=shelters" replace />} />
                 <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
-                <Route path="/voice/*"   element={<VoicePipeline alertId="" alertSeverity="GREEN" officerId="" onClose={() => {}} />} />
+                <Route path="/voice/*"   element={<VoiceGate />} />
                 <Route path="*"          element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>

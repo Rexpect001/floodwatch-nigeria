@@ -2,6 +2,8 @@
 Nigeria Climate Early Warning System — FastAPI Gateway
 Runs on port 8000; deployed behind nginx in Docker/K8s
 """
+import os
+import time
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -58,9 +60,16 @@ app = FastAPI(
 )
 
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+_ALLOWED_ORIGINS = [o.strip() for o in os.getenv(
+    "ALLOWED_ORIGINS",
+    "https://floodwatch-ng.vercel.app,https://floodwatch-nigeria.vercel.app,http://localhost:3000"
+).split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # Tighten in production to PWA domain
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://floodwatch.*\.vercel\.app",
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
@@ -82,3 +91,34 @@ Instrumentator().instrument(app).expose(app)
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "climate-ews"}
+
+
+@app.get("/health/detailed")
+async def health_detailed():
+    """Deep health check — verifies DB + Redis connectivity."""
+    from .db import _db_pool, _redis
+    import time
+    result: dict = {"service": "climate-ews", "checks": {}}
+    overall = "ok"
+
+    # DB check
+    try:
+        t0 = time.monotonic()
+        async with _db_pool.acquire() as conn:  # type: ignore
+            await conn.fetchval("SELECT 1")
+        result["checks"]["database"] = {"status": "ok", "latency_ms": round((time.monotonic()-t0)*1000)}
+    except Exception as e:
+        result["checks"]["database"] = {"status": "error", "detail": str(e)}
+        overall = "degraded"
+
+    # Redis check
+    try:
+        t0 = time.monotonic()
+        await _redis.ping()  # type: ignore
+        result["checks"]["redis"] = {"status": "ok", "latency_ms": round((time.monotonic()-t0)*1000)}
+    except Exception as e:
+        result["checks"]["redis"] = {"status": "error", "detail": str(e)}
+        overall = "degraded"
+
+    result["status"] = overall
+    return result

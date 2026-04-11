@@ -151,7 +151,9 @@ export default function SubscribeForm({ lang }: Props) {
   return (
     <div className="subscribe-page">
       <h1 className="subscribe-page__title">{t('subscribe.title')}</h1>
-      <p className="subscribe-page__ussd">{t('subscribe.ussd_hint')}</p>
+      <p className="subscribe-page__ussd">
+        No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
+      </p>
 
       <form className="subscribe-form" onSubmit={handleSubmit} noValidate>
         {/* Phone */}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0A1628"/>
+  <text x="256" y="340" font-size="320" text-anchor="middle" fill="white">🌊</text>
+  <rect x="0" y="400" width="512" height="112" rx="0" fill="#D32F2F"/>
+  <text x="256" y="476" font-size="64" font-family="sans-serif" font-weight="bold" text-anchor="middle" fill="white">ALERT</text>
+</svg>
