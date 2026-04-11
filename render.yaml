@@ -1,0 +1,221 @@
+## FloodWatch Nigeria — Render Infrastructure as Code
+## Services: API (web) + Ingestion + Alert Orchestrator + Alert Router (workers)
+## Database: PostgreSQL (PostGIS) + Redis
+## Deploy: render deploy --yaml render.yaml
+
+services:
+
+  # ── 1. FastAPI Gateway (Web Service) ─────────────────────────────
+  - type: web
+    name: floodwatch-api
+    runtime: docker
+    dockerfilePath: docker/Dockerfile.api
+    dockerContext: .
+    plan: starter          # $7/month — always-on (no sleep)
+    region: oregon         # closest to Nigeria on Render; frankfurt is EU alt
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: floodwatch-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: floodwatch-redis
+          type: redis
+          property: connectionString
+      - key: UVICORN_WORKERS
+        value: "2"
+      - key: LOG_LEVEL
+        value: "info"
+      - key: JWT_SECRET
+        sync: false                  # set manually in Render dashboard
+      - key: NIHSA_API_KEY
+        sync: false
+      - key: NIHSA_BASE_URL
+        value: "https://api.nihsa.gov.ng/v1"
+      - key: NIMET_API_KEY
+        sync: false
+      - key: NIMET_BASE_URL
+        value: "https://api.nimet.gov.ng/v1"
+      - key: NEMA_API_KEY
+        sync: false
+      - key: NEMA_WEBHOOK_SECRET
+        sync: false
+      - key: GOOGLE_FLOOD_HUB_KEY
+        sync: false
+      - key: GLOFAS_API_KEY
+        sync: false
+      - key: OWM_API_KEY
+        sync: false
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_SENDER_ID
+        value: "FloodWatchNG"
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_FROM
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false
+      - key: FIREBASE_SERVER_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_CLOUD_TTS_KEY
+        sync: false
+      - key: VOICE_S3_BUCKET
+        sync: false
+      - key: CLOUDFRONT_DOMAIN
+        sync: false
+      - key: TOTP_SECRET_DEFAULT
+        sync: false
+      - key: AT_CALLER_ID
+        sync: false
+      - key: IVR_UPDATE_ENDPOINT
+        sync: false
+      - key: RADIO_FTP_TARGETS
+        value: "[]"
+
+  # ── 2. Ingestion Scheduler (Background Worker) ───────────────────
+  - type: worker
+    name: floodwatch-ingestion
+    runtime: docker
+    dockerfilePath: docker/Dockerfile.ingestion
+    dockerContext: .
+    plan: starter          # $7/month — persistent, never sleeps
+    region: oregon
+    dockerCommand: python -m execution.ingestion.scheduler
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: floodwatch-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: floodwatch-redis
+          type: redis
+          property: connectionString
+      - key: NIHSA_API_KEY
+        sync: false
+      - key: NIHSA_BASE_URL
+        value: "https://api.nihsa.gov.ng/v1"
+      - key: NIMET_API_KEY
+        sync: false
+      - key: NIMET_BASE_URL
+        value: "https://api.nimet.gov.ng/v1"
+      - key: NEMA_API_KEY
+        sync: false
+      - key: GOOGLE_FLOOD_HUB_KEY
+        sync: false
+      - key: GLOFAS_API_KEY
+        sync: false
+      - key: OWM_API_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: "info"
+
+  # ── 3. Alert Orchestrator (Background Worker) ─────────────────────
+  - type: worker
+    name: floodwatch-alert-orchestrator
+    runtime: docker
+    dockerfilePath: docker/Dockerfile.ingestion
+    dockerContext: .
+    plan: starter
+    region: oregon
+    dockerCommand: python -m execution.alerts.alert_classifier
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: floodwatch-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: floodwatch-redis
+          type: redis
+          property: connectionString
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_SENDER_ID
+        value: "FloodWatchNG"
+      - key: FIREBASE_SERVER_KEY
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false
+      - key: LOG_LEVEL
+        value: "info"
+
+  # ── 4. Alert Router (Background Worker) ──────────────────────────
+  - type: worker
+    name: floodwatch-alert-router
+    runtime: docker
+    dockerfilePath: docker/Dockerfile.ingestion
+    dockerContext: .
+    plan: starter
+    region: oregon
+    dockerCommand: python -m execution.alerts.alert_router
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: floodwatch-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: floodwatch-redis
+          type: redis
+          property: connectionString
+      - key: AT_USERNAME
+        sync: false
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_SENDER_ID
+        value: "FloodWatchNG"
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_FROM
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_ID
+        sync: false
+      - key: FIREBASE_SERVER_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GOOGLE_CLOUD_TTS_KEY
+        sync: false
+      - key: LOG_LEVEL
+        value: "info"
+
+  # ── 5. Redis ─────────────────────────────────────────────────────
+  - type: redis
+    name: floodwatch-redis
+    plan: starter          # free 25MB → starter $10/month for 50MB persistent
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+
+  # ── 6. PostgreSQL (PostGIS) ────────────────────────────────────────
+  # Note: Run schema.sql after first deploy to enable PostGIS:
+  #   psql $DATABASE_URL -f execution/db/schema.sql
+  - name: floodwatch-db
+    databaseName: climate_ews
+    user: climate_user
+    plan: starter          # free 90 days → starter $7/month
+    region: oregon
+    postgresMajorVersion: 15
