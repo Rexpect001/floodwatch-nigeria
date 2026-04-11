@@ -25,6 +25,9 @@ pydantic-settings==2.5.2
 # HTTP client
 httpx==0.27.2
 
+# AI / Voice pipeline
+anthropic>=0.40.0
+
 # Utils
 python-dotenv==1.0.1
 pytz==2024.2
