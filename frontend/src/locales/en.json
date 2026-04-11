@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "FloodWatch Nigeria",
-    "tagline": "Official Early Warning System"
+    "name": "HazardWatch Nigeria",
+    "tagline": "Multi-Hazard Early Warning System"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -44,6 +44,33 @@
     "source_global": "Data: OpenWeatherMap (Global)",
     "confirmed_by": "Confirmed by: {{sources}}",
     "report_error": "Report an Error"
+  },
+  "hazard_type": {
+    "FLOOD_RIVERINE": "River Flood",
+    "FLOOD_FLASH": "Flash Flood",
+    "FLOOD_COASTAL": "Coastal Flood",
+    "HEATWAVE": "Heatwave",
+    "THUNDERSTORM": "Thunderstorm",
+    "DUST_HARMATTAN": "Dust/Harmattan",
+    "WINDSTORM": "Windstorm",
+    "LANDSLIDE": "Landslide",
+    "EARTHQUAKE": "Earthquake",
+    "EROSION": "Erosion",
+    "WILDFIRE": "Wildfire",
+    "DROUGHT": "Drought",
+    "DAM_RELEASE": "Dam Release",
+    "DISEASE_OUTBREAK": "Disease Outbreak",
+    "EVACUATION": "Evacuation Order",
+    "ALL_CLEAR": "All Clear"
+  },
+  "hazard_category": {
+    "all": "All Hazards",
+    "flood": "Flood",
+    "storm": "Storm/Wind",
+    "land": "Land/Geo",
+    "fire": "Fire/Drought",
+    "health": "Health",
+    "other": "Other"
   },
   "heatwave": {
     "title": "Heat Warning",

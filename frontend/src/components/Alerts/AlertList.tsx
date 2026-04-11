@@ -23,6 +23,36 @@ const SEVERITY_COLORS: Record<string, string> = {
   RED: '#D32F2F', ORANGE: '#F57C00', YELLOW: '#F9A825', GREEN: '#388E3C',
 }
 
+const ALERT_TYPE_ICONS: Record<string, string> = {
+  FLOOD_RIVERINE:   '🌊',
+  FLOOD_FLASH:      '⚡🌊',
+  FLOOD_COASTAL:    '🌊',
+  HEATWAVE:         '🔥',
+  THUNDERSTORM:     '⛈️',
+  DUST_HARMATTAN:   '🌫️',
+  WINDSTORM:        '💨',
+  LANDSLIDE:        '⛰️',
+  EARTHQUAKE:       '📳',
+  EROSION:          '🏔️',
+  WILDFIRE:         '🔥',
+  DROUGHT:          '🏜️',
+  DAM_RELEASE:      '🚧',
+  DISEASE_OUTBREAK: '🦠',
+  EVACUATION:       '🚨',
+  ALL_CLEAR:        '✅',
+}
+
+// Which alert_types belong to each category tab
+const HAZARD_CATEGORIES: Record<string, string[]> = {
+  all:    [],   // empty = show everything
+  flood:  ['FLOOD_RIVERINE', 'FLOOD_FLASH', 'FLOOD_COASTAL', 'DAM_RELEASE'],
+  storm:  ['THUNDERSTORM', 'WINDSTORM', 'DUST_HARMATTAN', 'HEATWAVE'],
+  land:   ['LANDSLIDE', 'EARTHQUAKE', 'EROSION'],
+  fire:   ['WILDFIRE', 'DROUGHT'],
+  health: ['DISEASE_OUTBREAK'],
+  other:  ['EVACUATION', 'ALL_CLEAR'],
+}
+
 function AlertCard({ alert, onReportError }: { alert: Alert; onReportError: (id: string) => void }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(alert.severity === 'RED')
@@ -40,7 +70,10 @@ function AlertCard({ alert, onReportError }: { alert: Alert; onReportError: (id:
         >
           {t(`severity.${alert.severity}`)}
         </span>
-        <span className="alert-card__type">{alert.alert_type.replace(/_/g, ' ')}</span>
+        <span className="alert-card__type">
+          <span aria-hidden>{ALERT_TYPE_ICONS[alert.alert_type] ?? '⚠️'}</span>
+          {' '}{alert.alert_type.replace(/_/g, ' ')}
+        </span>
         <button
           className="alert-card__expand"
           aria-expanded={expanded}
@@ -131,6 +164,7 @@ export default function AlertList({ lang }: Props) {
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = searchParams.get('tab') || 'alerts'
   const [severityFilter, setSeverityFilter] = useState<string>('all')
+  const [hazardCategory, setHazardCategory] = useState<string>('all')
   const [reportingId, setReportingId] = useState<string | null>(null)
   const [reportDesc, setReportDesc] = useState('')
   const [reportSent, setReportSent] = useState(false)
@@ -143,6 +177,11 @@ export default function AlertList({ lang }: Props) {
     }),
     refetchInterval: 60_000,
   })
+
+  const categoryTypes = HAZARD_CATEGORIES[hazardCategory] ?? []
+  const visibleAlerts = alerts.filter((a: Alert) =>
+    categoryTypes.length === 0 || categoryTypes.includes(a.alert_type)
+  )
 
   const handleReportError = async () => {
     if (!reportingId || reportDesc.length < 10) return
@@ -170,6 +209,25 @@ export default function AlertList({ lang }: Props) {
 
       {tab === 'alerts' && (
         <div role="tabpanel" aria-label="Active alerts">
+          {/* Hazard category tabs */}
+          <div className="hazard-filter" role="group" aria-label="Filter by hazard type">
+            {Object.keys(HAZARD_CATEGORIES).map(cat => (
+              <button
+                key={cat}
+                className={`hazard-btn ${hazardCategory === cat ? 'active' : ''}`}
+                onClick={() => setHazardCategory(cat)}
+              >
+                {cat === 'flood'  ? '🌊 ' :
+                 cat === 'storm'  ? '⛈️ ' :
+                 cat === 'land'   ? '⛰️ ' :
+                 cat === 'fire'   ? '🔥 ' :
+                 cat === 'health' ? '🦠 ' :
+                 cat === 'other'  ? '🚨 ' : ''}
+                {t(`hazard_category.${cat}`)}
+              </button>
+            ))}
+          </div>
+
           {/* Severity filter */}
           <div className="alert-filter" role="group" aria-label="Filter by severity">
             {['all', 'RED', 'ORANGE', 'YELLOW', 'GREEN'].map(s => (
@@ -186,14 +244,14 @@ export default function AlertList({ lang }: Props) {
           {isLoading && <div className="alert-list__loading" role="status">Loading alerts…</div>}
           {isError  && <div className="alert-list__error" role="alert">Unable to load alerts. Showing cached data.</div>}
 
-          {alerts.length === 0 && !isLoading && (
+          {visibleAlerts.length === 0 && !isLoading && (
             <div className="alert-list__none" role="status">
               {t('alerts.none')}
             </div>
           )}
 
           <div className="alert-list" role="feed" aria-label="Alert list">
-            {alerts.map(alert => (
+            {visibleAlerts.map((alert: Alert) => (
               <AlertCard key={alert.id} alert={alert} onReportError={setReportingId} />
             ))}
           </div>

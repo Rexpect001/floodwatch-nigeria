@@ -1,7 +1,7 @@
 {
   "app": {
-    "name": "FloodWatch Nigeria",
-    "tagline": "Govment Official Early Warning System"
+    "name": "HazardWatch Nigeria",
+    "tagline": "Govment Multi-Hazard Early Warning System"
   },
   "nav": {
     "dashboard": "Main Page",

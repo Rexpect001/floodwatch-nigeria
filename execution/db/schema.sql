@@ -201,9 +201,20 @@ CREATE INDEX idx_precip_lga_time ON precipitation_forecasts(lga_id, forecast_for
 CREATE TABLE alerts (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     alert_type      VARCHAR(32) NOT NULL CHECK (alert_type IN (
+                        -- Flood hazards
                         'FLOOD_RIVERINE', 'FLOOD_FLASH', 'FLOOD_COASTAL',
-                        'HEATWAVE', 'THUNDERSTORM', 'DUST_HARMATTAN',
-                        'DAM_RELEASE', 'EVACUATION', 'ALL_CLEAR'
+                        -- Heat / atmospheric
+                        'HEATWAVE', 'THUNDERSTORM', 'DUST_HARMATTAN', 'WINDSTORM',
+                        -- Geological / land
+                        'LANDSLIDE', 'EARTHQUAKE', 'EROSION',
+                        -- Fire / drought
+                        'WILDFIRE', 'DROUGHT',
+                        -- Infrastructure
+                        'DAM_RELEASE',
+                        -- Health / bio (climate-linked)
+                        'DISEASE_OUTBREAK',
+                        -- Civil / response
+                        'EVACUATION', 'ALL_CLEAR'
                     )),
     severity        VARCHAR(8) NOT NULL CHECK (severity IN ('RED', 'ORANGE', 'YELLOW', 'GREEN')),
     status          VARCHAR(16) DEFAULT 'ACTIVE' CHECK (status IN (

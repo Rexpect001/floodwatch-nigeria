@@ -139,7 +139,9 @@ export default function Dashboard({ lang }: Props) {
   })
 
   const topAlert = alerts.find(a => a.severity === 'RED') || alerts.find(a => a.severity === 'ORANGE')
-  const heatAlert = alerts.find(a => a.alert_type === 'HEATWAVE_RISK' && ['RED','ORANGE'].includes(a.severity))
+  const heatAlert = alerts.find(a => a.alert_type === 'HEATWAVE' && ['RED','ORANGE'].includes(a.severity))
+  const droughtAlert = alerts.find(a => a.alert_type === 'DROUGHT' && ['RED','ORANGE'].includes(a.severity))
+  const landslideAlert = alerts.find(a => a.alert_type === 'LANDSLIDE' && ['RED','ORANGE'].includes(a.severity))
 
   const countBySeverity = SEVERITY_ORDER.reduce(
     (acc, s) => ({ ...acc, [s]: alerts.filter(a => a.severity === s).length }),
@@ -186,10 +188,26 @@ export default function Dashboard({ lang }: Props) {
 
       {/* Heatwave advisory */}
       {heatAlert && (
-        <section className="dashboard__heatwave" aria-label="Heat advisory" role="note">
-          <h2 className="dashboard__section-title">{t('heatwave.title')}</h2>
+        <section className="dashboard__heatwave dashboard__advisory" aria-label="Heat advisory" role="note">
+          <h2 className="dashboard__section-title">🔥 {t('heatwave.title')}</h2>
           <p className="heatwave__advice">{t('heatwave.advice')}</p>
           <p className="heatwave__threshold"><small>{t('heatwave.threshold')}</small></p>
+        </section>
+      )}
+
+      {/* Drought advisory */}
+      {droughtAlert && (
+        <section className="dashboard__advisory" aria-label="Drought advisory" role="note">
+          <h2 className="dashboard__section-title">🏜️ Drought Warning</h2>
+          <p>Water scarcity conditions active. Conserve water. Check on vulnerable communities in affected LGAs.</p>
+        </section>
+      )}
+
+      {/* Landslide advisory */}
+      {landslideAlert && (
+        <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
+          <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
+          <p>Avoid hilly terrain and unstable slopes. Do not cross flooded roads or embankments in affected areas.</p>
         </section>
       )}
 
@@ -198,13 +216,27 @@ export default function Dashboard({ lang }: Props) {
         <QuickNav />
       </section>
 
-      {/* Annual Flood Outlook callout */}
+      {/* Seasonal outlook callout */}
       <section className="dashboard__afo-callout">
-        <h2 className="dashboard__section-title">{t('forecast.afo_title')}</h2>
-        <p>
-          <strong>{t('forecast.afo_window')}</strong> ·{' '}
-          <Link to="/map">{t('map.layers.floodRisk')}</Link>
-        </p>
+        <h2 className="dashboard__section-title">📋 Seasonal Hazard Outlook (NIHSA / NEMA)</h2>
+        <div className="dashboard__outlook-grid">
+          <div className="dashboard__outlook-item">
+            <span>🌊</span>
+            <span><strong>{t('forecast.afo_window')}</strong> · <Link to="/forecast">{t('forecast.afo_title')}</Link></span>
+          </div>
+          <div className="dashboard__outlook-item">
+            <span>🔥</span>
+            <span>Heatwave risk: <strong>Sokoto, Borno, Yobe</strong> (Apr–Jun)</span>
+          </div>
+          <div className="dashboard__outlook-item">
+            <span>🏜️</span>
+            <span>Drought watch: <strong>Northeast / Sahel belt</strong></span>
+          </div>
+          <div className="dashboard__outlook-item">
+            <span>⛰️</span>
+            <span>Landslide risk: <strong>Anambra, Enugu, Cross River</strong> (rainy season)</span>
+          </div>
+        </div>
         <p className="dashboard__accuracy-note">
           {t('map.lake_chad')} · {t('map.deforestation')}
         </p>

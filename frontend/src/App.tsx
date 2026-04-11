@@ -57,7 +57,7 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
   return (
     <nav className="app-nav" aria-label="Main navigation">
       <div className="app-nav__brand">
-        <span className="app-nav__logo" aria-hidden>🌊</span>
+        <span className="app-nav__logo" aria-hidden>🛡️</span>
         <span className="app-nav__title">{t('app.name')}</span>
       </div>
 
