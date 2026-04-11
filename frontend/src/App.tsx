@@ -141,7 +141,7 @@ export default function App() {
                 <Route path="/alerts"    element={<AlertList lang={lang} />} />
                 <Route path="/shelters"  element={<Navigate to="/alerts?tab=shelters" replace />} />
                 <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
-                <Route path="/voice/*"   element={<VoicePipeline lang={lang} />} />
+                <Route path="/voice/*"   element={<VoicePipeline alertId="" alertSeverity="GREEN" officerId="" onClose={() => {}} />} />
                 <Route path="*"          element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
