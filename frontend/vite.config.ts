@@ -19,16 +19,23 @@ export default defineConfig({
     }),
   ],
 
+  // Expose env vars to the client bundle
+  define: {
+    __API_BASE__: JSON.stringify(
+      process.env.VITE_API_BASE_URL || '/api/v1'
+    ),
+  },
+
   server: {
     port: 3000,
     proxy: {
-      // Dev proxy: forward /api/* to FastAPI on :8000
+      // Dev proxy: forward /api/* and /maps/* to FastAPI on :8000
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_DEV_API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
       '/maps': {
-        target: 'http://localhost:8000',
+        target: process.env.VITE_DEV_API_TARGET || 'http://localhost:8000',
         changeOrigin: true,
       },
     },

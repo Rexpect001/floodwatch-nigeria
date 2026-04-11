@@ -1,0 +1,25 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "docker/Dockerfile.api"
+
+[deploy]
+startCommand = "uvicorn execution.api.main:app --host 0.0.0.0 --port $PORT --workers 2 --loop uvloop --log-level info"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services]]
+name = "api"
+
+[[services]]
+name = "ingestion"
+startCommand = "python -m execution.ingestion.scheduler"
+
+[[services]]
+name = "alert-orchestrator"
+startCommand = "python -m execution.alerts.alert_classifier"
+
+[[services]]
+name = "alert-router"
+startCommand = "python -m execution.alerts.alert_router"
