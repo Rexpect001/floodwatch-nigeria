@@ -32,6 +32,14 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
+// User location marker icon (blue dot)
+const USER_ICON = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(33,150,243,0.35)"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+})
+
 const SEVERITY_COLORS: Record<string, string> = {
   HIGH:            '#D32F2F',
   MODERATE:        '#F57C00',
@@ -65,10 +73,42 @@ interface Props {
   onShelterClick?: (shelter: object)  => void
 }
 
+// ── Locate Me button (inside MapContainer) ───────────────────
+function LocateMeButton({ onLocate }: { onLocate: (latlng: [number,number]) => void }) {
+  const map = useMap()
+  const [locating, setLocating] = useState(false)
+  const [error,    setError]    = useState<string | null>(null)
+
+  const locate = () => {
+    if (!navigator.geolocation) { setError('GPS not available'); return }
+    setLocating(true); setError(null)
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const latlng: [number,number] = [pos.coords.latitude, pos.coords.longitude]
+        map.flyTo(latlng, 12, { animate: true, duration: 1.2 })
+        onLocate(latlng)
+        setLocating(false)
+      },
+      () => { setError('Location denied'); setLocating(false) },
+      { timeout: 8000, maximumAge: 60000 }
+    )
+  }
+
+  return (
+    <div className="map-locate-btn" title="Centre map on my location">
+      <button onClick={locate} disabled={locating} aria-label="Locate me">
+        {locating ? '⏳' : '📍'}
+      </button>
+      {error && <span className="map-locate-btn__error">{error}</span>}
+    </div>
+  )
+}
+
 export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
   const { t } = useTranslation()
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [dataAge,   setDataAge]   = useState<string | null>(null)
+  const [userPos,   setUserPos]   = useState<[number,number] | null>(null)
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     floodRisk: true,
     afo:       true,
@@ -247,6 +287,16 @@ export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
             }
           />
         )}
+
+        {/* User location marker */}
+        {userPos && (
+          <Marker position={userPos} icon={USER_ICON}>
+            <Popup><strong>Your location</strong></Popup>
+          </Marker>
+        )}
+
+        {/* Locate Me button */}
+        <LocateMeButton onLocate={setUserPos} />
       </MapContainer>
 
       {/* Layer toggle panel */}

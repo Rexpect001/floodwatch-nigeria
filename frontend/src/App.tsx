@@ -26,6 +26,7 @@ const FloodRiskMap      = React.lazy(() => import('./components/Map/FloodRiskMap
 const ForecastPanel     = React.lazy(() => import('./components/Forecast/ForecastPanel'))
 const AlertList         = React.lazy(() => import('./components/Alerts/AlertList'))
 const SubscribeForm     = React.lazy(() => import('./components/Subscribe/SubscribeForm'))
+const SheltersPage      = React.lazy(() => import('./components/Shelters/SheltersPage'))
 const VoicePipeline     = React.lazy(() => import('./components/VoicePipeline/VoicePipeline'))
 
 const queryClient = new QueryClient({
@@ -117,8 +118,8 @@ function BottomTabBar() {
     { to: '/',          icon: '🏠', label: 'Home'     },
     { to: '/map',       icon: '🗺️', label: 'Map'      },
     { to: '/alerts',    icon: '🚨', label: 'Alerts',  badge: criticalCount },
+    { to: '/shelters',  icon: '🏥', label: 'Shelters' },
     { to: '/forecast',  icon: '📊', label: 'Forecast' },
-    { to: '/subscribe', icon: '📱', label: 'SMS'      },
   ]
   return (
     <>
@@ -243,7 +244,7 @@ export default function App() {
                 <Route path="/map"       element={<FloodRiskMap lang={lang} />} />
                 <Route path="/forecast"  element={<ForecastPanel lang={lang} />} />
                 <Route path="/alerts"    element={<AlertList lang={lang} />} />
-                <Route path="/shelters"  element={<Navigate to="/alerts?tab=shelters" replace />} />
+                <Route path="/shelters"  element={<SheltersPage lang={lang} />} />
                 <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
                 <Route path="/voice/*"   element={<VoiceGate />} />
                 <Route path="*"          element={<Navigate to="/" replace />} />

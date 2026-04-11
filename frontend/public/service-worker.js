@@ -12,7 +12,7 @@
  * Offline banner: served from cache with staleness timestamp.
  */
 
-const CACHE_VERSION     = 'v1';
+const CACHE_VERSION     = 'v2';
 const SHELL_CACHE       = `floodwatch-shell-${CACHE_VERSION}`;
 const DATA_CACHE        = `floodwatch-data-${CACHE_VERSION}`;
 const MAP_CACHE         = `floodwatch-maps-${CACHE_VERSION}`;
@@ -24,8 +24,7 @@ const SHELL_ASSETS = [
   '/index.html',
   '/offline.html',
   '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
+  '/icons/icon.svg',
 ];
 
 // Offline flood risk tiles for 148 HIGH-risk LGAs
