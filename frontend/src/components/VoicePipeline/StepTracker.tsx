@@ -92,11 +92,11 @@ export default function StepTracker({
       {/* RED alert dual-auth progress */}
       {isRedAlert && (
         <div className="step-tracker__red-auth" role="status" aria-live="polite">
-          <div className="step-tracker__auth-dot" data-approved={primaryApproved ? 'true' : 'false'}>
+          <div className={`step-tracker__auth-dot ${primaryApproved ? 'done' : ''}`}>
             {t('voice.officer_1')}
           </div>
           <div className="step-tracker__auth-connector" aria-hidden="true">→</div>
-          <div className="step-tracker__auth-dot" data-approved="false">
+          <div className="step-tracker__auth-dot">
             {t('voice.officer_2')}
           </div>
         </div>

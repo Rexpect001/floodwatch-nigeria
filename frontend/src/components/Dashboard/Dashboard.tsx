@@ -20,6 +20,50 @@ interface Props { lang: SupportedLang }
 
 const SEVERITY_ORDER = ['RED', 'ORANGE', 'YELLOW', 'GREEN'] as const
 
+// ── Live Status Strip ─────────────────────────────────────────
+function LiveStatusBar({ alerts, isLoading }: { alerts: Alert[]; isLoading: boolean }) {
+  if (isLoading) return null
+  const red    = alerts.filter(a => a.severity === 'RED').length
+  const orange = alerts.filter(a => a.severity === 'ORANGE').length
+  const yellow = alerts.filter(a => a.severity === 'YELLOW').length
+  const total  = alerts.length
+
+  if (total === 0) {
+    return (
+      <div className="dashboard__status-strip">
+        <span className="status-chip status-chip--green">
+          <span className="status-chip__dot status-chip__dot--green" />
+          All clear
+        </span>
+        <span className="status-chip status-chip--muted">No active alerts</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="dashboard__status-strip">
+      {red > 0 && (
+        <span className="status-chip status-chip--red">
+          <span className="status-chip__dot status-chip__dot--red" />
+          {red} Critical
+        </span>
+      )}
+      {orange > 0 && (
+        <span className="status-chip status-chip--orange">
+          <span className="status-chip__dot status-chip__dot--orange" />
+          {orange} High Risk
+        </span>
+      )}
+      {yellow > 0 && (
+        <span className="status-chip status-chip--yellow">
+          {yellow} Moderate
+        </span>
+      )}
+      <span className="status-chip status-chip--muted">{total} alerts active</span>
+    </div>
+  )
+}
+
 // ── Weather Widget ────────────────────────────────────────────
 function WeatherWidget({ lang }: { lang: SupportedLang }) {
   const LGA_ABUJA = 1  // fallback LGA until geolocation is wired
@@ -150,6 +194,9 @@ export default function Dashboard({ lang }: Props) {
 
   return (
     <div className="dashboard">
+      {/* Live status strip */}
+      <LiveStatusBar alerts={alerts} isLoading={isLoading} />
+
       {/* Weather widget */}
       <WeatherWidget lang={lang} />
 

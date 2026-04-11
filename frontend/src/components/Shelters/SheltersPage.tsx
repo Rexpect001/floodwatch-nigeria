@@ -74,10 +74,12 @@ export default function SheltersPage({ lang }: Props) {
 
   return (
     <div className="shelters-page">
-      <h1 className="shelters-page__title">🏥 {t('shelters.title', 'Evacuation Shelters')}</h1>
-      <p className="shelters-page__subtitle">
-        {t('shelters.subtitle', 'NEMA-approved evacuation centres — open during flood emergencies')}
-      </p>
+      <div className="shelters-page__header">
+        <h1 className="shelters-page__title">🏥 {t('shelters.title', 'Evacuation Shelters')}</h1>
+        <p className="shelters-page__subtitle">
+          {t('shelters.subtitle', 'NEMA-approved evacuation centres — open during flood emergencies')}
+        </p>
+      </div>
 
       {/* Mini map */}
       <div className="shelters-page__map">
