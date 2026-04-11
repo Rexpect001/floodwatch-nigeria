@@ -12,7 +12,8 @@
  *   /voice       → VoicePipeline (NEMA officers only)
  */
 import React, { Suspense, useState } from 'react'
-import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
+import './index.css'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './i18n'
@@ -100,6 +101,35 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
   )
 }
 
+// ── Bottom Tab Bar ───────────────────────────────────────────
+
+function BottomTabBar() {
+  const location = useLocation()
+  const tabs = [
+    { to: '/',          icon: '🏠', label: 'Home'     },
+    { to: '/map',       icon: '🗺️', label: 'Map'      },
+    { to: '/alerts',    icon: '🚨', label: 'Alerts'   },
+    { to: '/forecast',  icon: '📊', label: 'Forecast' },
+    { to: '/subscribe', icon: '📱', label: 'SMS'      },
+  ]
+  return (
+    <>
+      {tabs.map(tab => (
+        <NavLink
+          key={tab.to}
+          to={tab.to}
+          end={tab.to === '/'}
+          className={({ isActive }) => `footer-tab ${isActive ? 'active' : ''}`}
+          aria-label={tab.label}
+        >
+          <span className="footer-tab__icon" aria-hidden>{tab.icon}</span>
+          <span>{tab.label}</span>
+        </NavLink>
+      ))}
+    </>
+  )
+}
+
 // ── Loading fallback ─────────────────────────────────────────
 
 function PageLoader() {
@@ -148,10 +178,7 @@ export default function App() {
           </main>
 
           <footer className="app-footer">
-            <small>
-              {new Date().getFullYear()} FloodWatch Nigeria · NEMA/NIHSA/NiMet ·{' '}
-              <a href="tel:08000636261">0800-NEMA</a>
-            </small>
+            <BottomTabBar />
           </footer>
         </div>
       </BrowserRouter>
