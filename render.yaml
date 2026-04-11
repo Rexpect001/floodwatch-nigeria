@@ -217,6 +217,6 @@ databases:
   - name: floodwatch-db
     databaseName: climate_ews
     user: climate_user
-    plan: starter          # free 90 days → starter $7/month
+    plan: free             # Render free PostgreSQL (90-day expiry on free tier)
     region: oregon
-    postgresMajorVersion: 15
+    postgresMajorVersion: 16
