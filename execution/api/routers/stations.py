@@ -1,6 +1,7 @@
 """
 Stations endpoints — hydrometric gauges, weather stations, dam registry.
 
+GET /api/v1/stations/lgas                    — all 774 LGAs grouped by state
 GET /api/v1/stations/gauges                  — list all 273 NIHSA gauges
 GET /api/v1/stations/gauges/{station_id}     — single gauge detail
 GET /api/v1/stations/gauges/{station_id}/readings  — time-series readings
@@ -13,6 +14,39 @@ from fastapi import APIRouter, Depends, Query
 from ..db import get_db, get_redis
 
 router = APIRouter()
+
+
+@router.get("/lgas", summary="All 774 LGAs grouped by state")
+async def list_lgas(db=Depends(get_db)):
+    """Returns all LGAs grouped by state for the forecast LGA selector."""
+    async with db.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT l.id, l.name_en, l.flood_risk_class,
+                   s.id state_id, s.name_en state_name, s.code state_code
+            FROM lgas l
+            JOIN states s ON s.id = l.state_id
+            ORDER BY s.name_en, l.name_en
+            """
+        )
+
+    # Group by state
+    states: dict = {}
+    for r in rows:
+        sc = r["state_code"]
+        if sc not in states:
+            states[sc] = {"state_id": r["state_id"], "state_name": r["state_name"], "state_code": sc, "lgas": []}
+        states[sc]["lgas"].append({
+            "id": r["id"],
+            "name": r["name_en"],
+            "flood_risk_class": r["flood_risk_class"],
+        })
+
+    return {
+        "total_lgas": len(rows),
+        "total_states": len(states),
+        "states": list(states.values()),
+    }
 
 
 @router.get("/gauges")
