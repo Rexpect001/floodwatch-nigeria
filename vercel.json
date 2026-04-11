@@ -50,7 +50,7 @@
   ],
   "env": {
     "VITE_API_BASE_URL": "https://floodwatch-api-is3d.onrender.com/api/v1",
-    "REACT_APP_MAPBOX_TOKEN": "@mapbox_token",
-    "REACT_APP_SAR_WMS_URL": "@sar_wms_url"
+    "REACT_APP_MAPBOX_TOKEN": "",
+    "REACT_APP_SAR_WMS_URL": ""
   }
 }
