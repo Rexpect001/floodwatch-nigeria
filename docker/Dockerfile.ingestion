@@ -1,0 +1,33 @@
+# Ingestion Service + Alert Orchestrator + Alert Router
+# Shared image — entrypoint set per container in docker-compose/k8s
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# System deps: ffmpeg (audio normalization), libpq (asyncpg), git (piexif build)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libpq-dev \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.ingestion.txt .
+RUN pip install --no-cache-dir -r requirements.ingestion.txt
+
+# Copy all service code
+COPY execution/ingestion  ./execution/ingestion
+COPY execution/alerts     ./execution/alerts
+COPY execution/voice      ./execution/voice
+COPY execution/validation ./execution/validation
+COPY execution/db         ./execution/db
+
+# Non-root user
+RUN useradd -r -u 1001 appuser && chown -R appuser /app
+USER appuser
+
+# Default command — overridden per container:
+#   ingestion:    python -m execution.ingestion.scheduler
+#   orchestrator: python -m execution.alerts.alert_classifier
+#   router:       python -m execution.alerts.alert_router
+CMD ["python", "-m", "execution.ingestion.scheduler"]

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1565C0" />
+    <meta name="description" content="Official Nigeria Flood &amp; Climate Early Warning System — NEMA/NIHSA/NiMet" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- Mapbox GL CSS (loaded via npm, but preconnect for tile requests) -->
+    <link rel="preconnect" href="https://api.mapbox.com" crossorigin />
+    <link rel="preconnect" href="https://events.mapbox.com" crossorigin />
+
+    <!-- Prevent flash of unstyled content on slow networks -->
+    <style>
+      body { margin: 0; background: #f5f7fa; font-family: system-ui, sans-serif; }
+      #root { min-height: 100vh; }
+      .initial-loader {
+        display: flex; align-items: center; justify-content: center;
+        height: 100vh; flex-direction: column; gap: 16px; color: #1565C0;
+      }
+      .initial-loader__spinner {
+        width: 40px; height: 40px; border: 4px solid #e3eaf5;
+        border-top-color: #1565C0; border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+
+    <title>FloodWatch Nigeria</title>
+  </head>
+  <body>
+    <div id="root">
+      <!-- Shown before React hydrates -->
+      <div class="initial-loader" aria-label="Loading FloodWatch Nigeria" role="status">
+        <div class="initial-loader__spinner" aria-hidden="true"></div>
+        <span>FloodWatch Nigeria…</span>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

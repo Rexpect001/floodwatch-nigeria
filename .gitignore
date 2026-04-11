@@ -1,0 +1,63 @@
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+pip-wheel-metadata/
+
+# ── Environment & secrets ────────────────────────────────────
+.env
+*.env.local
+*.env.production
+gcp-credentials.json
+credentials.json
+token.json
+*.pem
+*.key
+*.p12
+*.pfx
+service-account*.json
+
+# ── Database ─────────────────────────────────────────────────
+*.sqlite
+*.db
+
+# ── Node / Frontend ──────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+*.tsbuildinfo
+
+# ── IDE ──────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Docker volumes ───────────────────────────────────────────
+docker/volumes/
+pgdata/
+redisdata/
+
+# ── Temp / build artefacts ───────────────────────────────────
+.tmp/
+tmp/
+*.log
+*.bak
+
+# ── Audio / media (generated — not committed) ────────────────
+*.mp3
+*.wav
+*.ogg

@@ -1,0 +1,51 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: production
+    region: af-south-1
+
+scrape_configs:
+
+  # FastAPI — prometheus-fastapi-instrumentator exposes /metrics
+  - job_name: 'climate-api'
+    static_configs:
+      - targets: ['api:8000']
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # Ingestion service — prometheus-client on port 9001
+  - job_name: 'climate-ingestion'
+    static_configs:
+      - targets: ['ingestion:9001']
+    scrape_interval: 30s
+
+  # Alert orchestrator
+  - job_name: 'climate-alerts'
+    static_configs:
+      - targets: ['alert_orchestrator:9002']
+    scrape_interval: 30s
+
+  # Alert router (RabbitMQ consumer)
+  - job_name: 'climate-alert-router'
+    static_configs:
+      - targets: ['alert_router:9003']
+    scrape_interval: 30s
+
+  # Redis exporter (if deployed)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # PostgreSQL exporter (if deployed)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['db:5432']
+    scrape_interval: 60s
+
+  # Nginx exporter (if nginx-prometheus-exporter sidecar deployed)
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+    scrape_interval: 30s

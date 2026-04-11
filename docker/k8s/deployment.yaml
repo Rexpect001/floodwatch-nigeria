@@ -1,0 +1,294 @@
+# Kubernetes Deployment — Nigeria Climate EWS
+# Target: AWS EKS (af-south-1 / Lagos region) or Azure AKS (South Africa)
+# CDN: CloudFront (AWS) or Azure Front Door in front of nginx/static
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: climate-api
+  namespace: climate-ews
+  labels:
+    app: climate-api
+    tier: api
+spec:
+  replicas: 3           # Scale to 6 during July-Sept peak flood season
+  selector:
+    matchLabels:
+      app: climate-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: climate-api
+    spec:
+      containers:
+        - name: api
+          image: YOUR_REGISTRY/climate-api:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: redis-url
+            - name: NIHSA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: nihsa-api-key
+            - name: OWM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: owm-api-key
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: climate-ingestion
+  namespace: climate-ews
+spec:
+  replicas: 1    # Single ingestion worker; scale horizontally by data source
+  selector:
+    matchLabels:
+      app: climate-ingestion
+  template:
+    metadata:
+      labels:
+        app: climate-ingestion
+    spec:
+      containers:
+        - name: ingestion
+          image: YOUR_REGISTRY/climate-ingestion:latest
+          command: ["python", "-m", "execution.ingestion.scheduler"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: redis-url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: climate-alert-orchestrator
+  namespace: climate-ews
+spec:
+  replicas: 2    # Dual for HA during peak season
+  selector:
+    matchLabels:
+      app: climate-alert-orchestrator
+  template:
+    metadata:
+      labels:
+        app: climate-alert-orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: YOUR_REGISTRY/climate-ingestion:latest
+          command: ["python", "-m", "execution.alerts.alert_classifier"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: redis-url
+            - name: AT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: at-api-key
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+# Alert Router — RabbitMQ consumer for approved voice alerts
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: climate-alert-router
+  namespace: climate-ews
+spec:
+  replicas: 2    # Dual for HA; prefetch_count=5 per replica = 10 concurrent
+  selector:
+    matchLabels:
+      app: climate-alert-router
+  template:
+    metadata:
+      labels:
+        app: climate-alert-router
+    spec:
+      containers:
+        - name: alert-router
+          image: YOUR_REGISTRY/climate-ingestion:latest
+          command: ["python", "-m", "execution.alerts.alert_router"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: database-url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: redis-url
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: rabbitmq-url
+            - name: AT_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: at-api-key
+            - name: AT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: at-username
+            - name: FIREBASE_SERVER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: firebase-server-key
+            - name: WHATSAPP_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: climate-secrets
+                  key: whatsapp-token
+            - name: VOICE_S3_BUCKET
+              value: "nimet-plus-alerts"
+            - name: AWS_DEFAULT_REGION
+              value: "af-south-1"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: climate-api-svc
+  namespace: climate-ews
+spec:
+  selector:
+    app: climate-api
+  ports:
+    - port: 80
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# HPA — auto-scale API during July-Sept flood season
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: climate-api-hpa
+  namespace: climate-ews
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: climate-api
+  minReplicas: 3
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# Ingress with TLS termination
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: climate-ingress
+  namespace: climate-ews
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - api.floodwatch.ng
+      secretName: climate-tls
+  rules:
+    - host: api.floodwatch.ng
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: climate-api-svc
+                port:
+                  number: 80

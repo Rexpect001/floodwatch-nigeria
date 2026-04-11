@@ -1,0 +1,50 @@
+# Ingestion service + Alert orchestrator + Alert Router
+# Shared by all three non-API containers
+
+# Scheduling
+apscheduler==3.10.4            # 15-min poll cycle
+
+# Database
+asyncpg==0.29.0
+psycopg2-binary==2.9.9
+
+# HTTP
+httpx==0.27.2
+aiohttp==3.10.5                # GloFAS CDS API uses aiohttp-style sessions
+
+# Cache & messaging
+redis[hiredis]==5.0.8
+aio-pika==9.4.3                # RabbitMQ async client (AMQP 0-9-1)
+
+# SMS / Voice dispatch
+africastalking==1.2.8          # Africa's Talking SMS + Voice
+twilio==9.3.3                  # Fallback SMS
+
+# WhatsApp
+requests==2.32.3               # Meta WhatsApp Business API (sync, simple)
+
+# AI / TTS
+anthropic==0.34.2              # Claude API (translation_service.py)
+google-cloud-texttospeech==2.17.2
+
+# Audio processing
+pydub==0.25.1                  # Waveform amplitude extraction
+# Note: ffmpeg must be installed in the Docker image (apt-get install ffmpeg)
+
+# AWS
+boto3==1.35.24                 # S3 upload for voice clips
+
+# Image verification (CBEWS)
+Pillow==10.4.0                 # EXIF extraction
+piexif==1.1.3
+
+# 2FA (governance emergency override)
+pyotp==2.9.0
+
+# Utils
+python-dotenv==1.0.1
+pytz==2024.2
+orjson==3.10.7
+
+# Monitoring
+prometheus-client==0.21.0

@@ -1,0 +1,40 @@
+{
+  "name": "FloodWatch Nigeria",
+  "short_name": "FloodWatch",
+  "description": "Official Nigeria Flood & Climate Early Warning System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#1565C0",
+  "orientation": "portrait-primary",
+  "lang": "en-NG",
+  "icons": [
+    { "src": "/icons/icon-72.png",   "sizes": "72x72",   "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-96.png",   "sizes": "96x96",   "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-128.png",  "sizes": "128x128", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-192.png",  "sizes": "192x192", "type": "image/png", "purpose": "maskable any" },
+    { "src": "/icons/icon-512.png",  "sizes": "512x512", "type": "image/png", "purpose": "maskable any" }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/dashboard.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" },
+    { "src": "/screenshots/map.png",       "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
+  ],
+  "categories": ["weather", "utilities", "government"],
+  "shortcuts": [
+    {
+      "name": "Active Alerts",
+      "short_name": "Alerts",
+      "description": "View current flood and weather alerts",
+      "url": "/alerts",
+      "icons": [{ "src": "/icons/shortcut-alerts.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Find Shelter",
+      "short_name": "Shelter",
+      "description": "Locate nearest evacuation shelter",
+      "url": "/shelters",
+      "icons": [{ "src": "/icons/shortcut-shelter.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -1,0 +1,241 @@
+# Nigeria Climate Early Warning System — Docker Compose
+# Development/staging environment
+# Production: deploy to AWS Lagos (af-south-1) or Azure South Africa + CloudFront CDN
+
+version: '3.9'
+
+services:
+
+  # ============================================================
+  # PostgreSQL + PostGIS
+  # ============================================================
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: climate_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: climate_ews
+      POSTGRES_USER: climate_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d                        # init shell script
+      - ../execution/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ../execution/db/schema_voice.sql:/docker-entrypoint-initdb.d/schema_voice.sql:ro
+      - ../execution/db/schema_missing_tables.sql:/docker-entrypoint-initdb.d/schema_missing_tables.sql:ro
+      - ../execution/db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U climate_user -d climate_ews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================
+  # Redis — alert caching + pub/sub + rate-limit counters
+  # ============================================================
+  redis:
+    image: redis:7-alpine
+    container_name: climate_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru --save 60 1000
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============================================================
+  # API Gateway (FastAPI)
+  # ============================================================
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: climate_api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://climate_user:${DB_PASSWORD}@db:5432/climate_ews
+      REDIS_URL: redis://redis:6379
+      NIHSA_API_KEY: ${NIHSA_API_KEY}
+      NIMET_API_KEY: ${NIMET_API_KEY}
+      OWM_API_KEY: ${OWM_API_KEY}
+      GOOGLE_FLOOD_HUB_KEY: ${GOOGLE_FLOOD_HUB_KEY}
+      AT_USERNAME: ${AT_USERNAME}
+      AT_API_KEY: ${AT_API_KEY}
+      AT_SENDER_ID: FloodWatchNG
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ============================================================
+  # Ingestion Service — polls NIHSA/NiMet/OWM every 15 min
+  # ============================================================
+  ingestion:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestion
+    container_name: climate_ingestion
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://climate_user:${DB_PASSWORD}@db:5432/climate_ews
+      REDIS_URL: redis://redis:6379
+      NIHSA_BASE_URL: ${NIHSA_BASE_URL}
+      NIHSA_API_KEY: ${NIHSA_API_KEY}
+      NIMET_API_KEY: ${NIMET_API_KEY}
+      OWM_API_KEY: ${OWM_API_KEY}
+      GOOGLE_FLOOD_HUB_KEY: ${GOOGLE_FLOOD_HUB_KEY}
+      GLOFAS_API_KEY: ${GLOFAS_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python -m execution.ingestion.scheduler
+
+  # ============================================================
+  # Alert Orchestration Service
+  # ============================================================
+  alert_orchestrator:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestion
+    container_name: climate_alerts
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://climate_user:${DB_PASSWORD}@db:5432/climate_ews
+      REDIS_URL: redis://redis:6379
+      AT_USERNAME: ${AT_USERNAME}
+      AT_API_KEY: ${AT_API_KEY}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_FROM: ${TWILIO_PHONE_FROM}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN}
+    depends_on:
+      - redis
+      - db
+    command: python -m execution.alerts.alert_classifier
+
+  # ============================================================
+  # Nginx reverse proxy + PWA static files
+  # ============================================================
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: climate_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro   # built PWA
+      - certbot_www:/var/www/certbot
+      - certbot_conf:/etc/letsencrypt
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+
+  # ============================================================
+  # Prometheus metrics scraper
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: climate_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheusdata:/prometheus
+    ports:
+      - "9090:9090"
+
+  # ============================================================
+  # Alert Router — RabbitMQ consumer (post-governance dispatch)
+  # Dispatches approved voice alerts to AT Voice / Radio FTP / IVR / FCM / WhatsApp
+  # ============================================================
+  alert_router:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ingestion
+    container_name: climate_alert_router
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://climate_user:${DB_PASSWORD}@db:5432/climate_ews
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: ${RABBITMQ_URL:-amqp://guest:guest@rabbitmq:5672/}
+      AT_USERNAME: ${AT_USERNAME}
+      AT_API_KEY: ${AT_API_KEY}
+      AT_CALLER_ID: ${AT_CALLER_ID}
+      RADIO_FTP_TARGETS: ${RADIO_FTP_TARGETS:-[]}
+      FIREBASE_SERVER_KEY: ${FIREBASE_SERVER_KEY}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN}
+      WHATSAPP_PHONE_ID: ${WHATSAPP_PHONE_ID}
+      VOICE_S3_BUCKET: ${VOICE_S3_BUCKET:-nimet-plus-alerts}
+      CLOUDFRONT_DOMAIN: ${CLOUDFRONT_DOMAIN}
+      IVR_UPDATE_ENDPOINT: ${IVR_UPDATE_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-af-south-1}
+    depends_on:
+      - db
+      - redis
+      - rabbitmq
+    command: python -m execution.alerts.alert_router
+
+  # ============================================================
+  # RabbitMQ — message broker for voice alert governance queue
+  # ============================================================
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: climate_rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-climate}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-changeme}
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  # Grafana dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: climate_grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitmqdata:
+  prometheusdata:
+  grafanadata:
+  certbot_www:
+  certbot_conf:
