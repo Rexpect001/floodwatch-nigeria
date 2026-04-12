@@ -8,69 +8,69 @@
 
 /* ── 1. Design Tokens ─────────────────────────────────────────── */
 :root {
-  /* Backgrounds — deep charcoal (warmer than slate) */
-  --bg:          #0A0C10;
-  --surface:     #111318;
-  --surface-2:   #181C24;
-  --surface-3:   #1F2430;
-  --surface-4:   #272D3C;
+  /* Backgrounds — light neutral */
+  --bg:          #F4F6F9;
+  --surface:     #FFFFFF;
+  --surface-2:   #EEF1F6;
+  --surface-3:   #E4E9F2;
+  --surface-4:   #D8DFEB;
 
   /* Borders */
-  --border:      #2A3040;
-  --border-2:    #1D2230;
-  --border-hi:   #404D66;
+  --border:      #D1D9E6;
+  --border-2:    #DDE3ED;
+  --border-hi:   #B0BDD0;
 
-  /* Brand / Warm Amber (was sky-blue) */
-  --sky:         #F59E0B;
-  --sky-light:   #FCD34D;
-  --sky-dark:    #D97706;
-  --sky-dim:     rgba(245,158,11,0.10);
-  --sky-glow:    rgba(245,158,11,0.22);
-  --sky-border:  rgba(245,158,11,0.35);
+  /* Brand / Warm Orange (ACLED-inspired) */
+  --sky:         #EA580C;
+  --sky-light:   #F97316;
+  --sky-dark:    #C2410C;
+  --sky-dim:     rgba(234,88,12,0.08);
+  --sky-glow:    rgba(234,88,12,0.20);
+  --sky-border:  rgba(234,88,12,0.30);
 
   /* Teal — for map/water/safe indicators */
-  --teal:        #14B8A6;
-  --teal-dim:    rgba(20,184,166,0.12);
-  --teal-border: rgba(20,184,166,0.35);
+  --teal:        #0D9488;
+  --teal-dim:    rgba(13,148,136,0.10);
+  --teal-border: rgba(13,148,136,0.30);
 
   /* Severity — RED */
-  --red:         #EF4444;
-  --red-dim:     rgba(239,68,68,0.12);
-  --red-border:  rgba(239,68,68,0.35);
+  --red:         #DC2626;
+  --red-dim:     rgba(220,38,38,0.08);
+  --red-border:  rgba(220,38,38,0.25);
 
   /* Severity — ORANGE */
-  --orange:      #F97316;
-  --orange-dim:  rgba(249,115,22,0.12);
-  --orange-border: rgba(249,115,22,0.35);
+  --orange:      #EA580C;
+  --orange-dim:  rgba(234,88,12,0.08);
+  --orange-border: rgba(234,88,12,0.25);
 
   /* Severity — YELLOW */
-  --yellow:      #EAB308;
-  --yellow-dim:  rgba(234,179,8,0.10);
-  --yellow-border: rgba(234,179,8,0.30);
+  --yellow:      #CA8A04;
+  --yellow-dim:  rgba(202,138,4,0.08);
+  --yellow-border: rgba(202,138,4,0.25);
 
   /* Severity — GREEN */
-  --green:       #22C55E;
-  --green-dim:   rgba(34,197,94,0.10);
-  --green-border: rgba(34,197,94,0.30);
+  --green:       #16A34A;
+  --green-dim:   rgba(22,163,74,0.08);
+  --green-border: rgba(22,163,74,0.25);
 
   /* Warm accent */
   --amber:       #F59E0B;
-  --amber-dim:   rgba(245,158,11,0.10);
+  --amber-dim:   rgba(245,158,11,0.08);
 
-  /* Text */
-  --text:        #E2E8F0;
-  --text-2:      #8B9CB8;
-  --text-3:      #5B6B82;
-  --text-4:      #3D4E63;
+  /* Text — dark on light */
+  --text:        #0F172A;
+  --text-2:      #374151;
+  --text-3:      #6B7280;
+  --text-4:      #9CA3AF;
 
   /* Typography */
   --font:        'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Layout */
-  --nav-h:       62px;
-  --tab-h:       66px;
-  --max-w:       520px;
-  --side-w:      248px;
+  /* Layout — full width, no max-w cap on main content */
+  --nav-h:       60px;
+  --tab-h:       64px;
+  --panel-max:   1280px;   /* max overall container */
+  --side-w:      260px;
 
   /* Border radii */
   --r:           8px;
@@ -78,12 +78,12 @@
   --r-xl:        16px;
   --r-2xl:       24px;
 
-  /* Shadows */
-  --shadow:      0 8px 40px rgba(0,0,0,0.65);
-  --shadow-md:   0 4px 20px rgba(0,0,0,0.50);
-  --shadow-sm:   0 2px 8px  rgba(0,0,0,0.35);
-  --shadow-sky:  0 4px 20px rgba(245,158,11,0.18);
-  --shadow-teal: 0 4px 20px rgba(20,184,166,0.18);
+  /* Shadows — lighter for light theme */
+  --shadow:      0 4px 24px rgba(15,23,42,0.10);
+  --shadow-md:   0 2px 12px rgba(15,23,42,0.08);
+  --shadow-sm:   0 1px 4px  rgba(15,23,42,0.06);
+  --shadow-sky:  0 4px 16px rgba(234,88,12,0.18);
+  --shadow-teal: 0 4px 16px rgba(13,148,136,0.15);
 
   /* Motion */
   --ease:        cubic-bezier(0.16, 1, 0.3, 1);
@@ -115,8 +115,8 @@ body {
   overscroll-behavior: none;
 }
 
-a { color: var(--sky-light); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--sky); text-decoration: none; }
+a:hover { text-decoration: underline; color: var(--sky-dark); }
 
 h1 { font-size: 1.5rem;  font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; }
 h2 { font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
@@ -177,7 +177,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .spinner {
   display: inline-block;
   width: 16px; height: 16px;
-  border: 2px solid rgba(255,255,255,0.12);
+  border: 2px solid rgba(15,23,42,0.10);
   border-top-color: var(--sky);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -207,6 +207,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   padding-top: var(--nav-h);
   padding-bottom: var(--tab-h);
   -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 /* ── 7. Top Navigation ────────────────────────────────────────── */
@@ -217,12 +218,13 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   z-index: 100;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 20px;
   gap: 12px;
-  background: rgba(7,9,15,0.90);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 8px rgba(15,23,42,0.06);
 }
 
 .app-nav::after {
@@ -256,13 +258,10 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 }
 
 .app-nav__title {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: -0.01em;
-  background: linear-gradient(135deg, var(--text) 30%, var(--sky-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
   white-space: nowrap;
 }
 
@@ -277,7 +276,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 
 .app-nav__link {
   display: block;
-  padding: 6px 12px;
+  padding: 6px 13px;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-3);
@@ -286,14 +285,14 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   white-space: nowrap;
 }
 .app-nav__link:hover {
-  color: var(--text-2);
+  color: var(--text);
   background: var(--surface-2);
   text-decoration: none;
 }
 .app-nav__link.active {
-  color: var(--sky-light);
+  color: var(--sky);
   background: var(--sky-dim);
-  border-left: 2px solid var(--sky);
+  font-weight: 700;
 }
 
 /* Hamburger */
@@ -312,11 +311,11 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .app-nav__hamburger span {
   display: block;
   height: 2px;
-  background: var(--text-3);
+  background: var(--text-2);
   border-radius: 2px;
   transition: all 0.2s var(--ease);
 }
-.app-nav__hamburger:hover span { background: var(--text-2); }
+.app-nav__hamburger:hover span { background: var(--text); }
 
 /* Language selector */
 .app-nav__lang {
@@ -330,10 +329,11 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   border-radius: var(--r);
   cursor: pointer;
   outline: none;
-  max-width: 88px;
+  max-width: 95px;
   -webkit-appearance: none;
   appearance: none;
 }
+.app-nav__lang option { background: #fff; color: var(--text); }
 .app-nav__lang:focus { border-color: var(--sky); color: var(--text); }
 
 /* Mobile menu expanded */
@@ -343,13 +343,14 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   position: fixed;
   top: var(--nav-h);
   left: 0; right: 0;
-  background: rgba(7,9,15,0.98);
-  backdrop-filter: blur(24px);
+  background: rgba(255,255,255,0.98);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   padding: 12px 16px 24px;
   gap: 4px;
   animation: slideDown 0.2s var(--ease);
   z-index: 99;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.08);
 }
 .app-nav__links.open .app-nav__link {
   padding: 13px 16px;
@@ -365,10 +366,11 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   z-index: 100;
   display: flex;
   align-items: stretch;
-  background: rgba(7,9,15,0.96);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 12px rgba(15,23,42,0.06);
 }
 
 .footer-tab {
@@ -379,10 +381,10 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   justify-content: center;
   gap: 3px;
   font-size: 0.6rem;
-  font-weight: 800;
-  color: var(--text-4);
+  font-weight: 700;
+  color: var(--text-3);
   text-decoration: none;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   transition: color 0.15s;
   position: relative;
@@ -501,19 +503,20 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .btn--green:hover { opacity: 0.9; }
 
 .btn--secondary {
-  background: var(--surface-3);
+  background: var(--surface);
   color: var(--text);
-  border-color: var(--border-hi);
+  border-color: var(--border);
+  box-shadow: var(--shadow-sm);
 }
 .btn--secondary:hover {
-  background: var(--surface-4);
-  border-color: var(--sky-border);
+  background: var(--surface-2);
+  border-color: var(--border-hi);
   text-decoration: none;
 }
 
 .btn--ghost {
   background: transparent;
-  color: var(--text-2);
+  color: var(--text-3);
   border-color: var(--border);
 }
 .btn--ghost:hover {
@@ -557,8 +560,8 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .form-input,
 .form-select {
   width: 100%;
-  background: var(--surface-3);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
   border-radius: var(--r);
   color: var(--text);
   font-size: 0.9rem;
@@ -568,6 +571,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   transition: border-color 0.15s, box-shadow 0.15s;
   -webkit-appearance: none;
   appearance: none;
+  box-shadow: 0 1px 3px rgba(15,23,42,0.04);
 }
 .form-input:focus,
 .form-select:focus {
@@ -580,13 +584,13 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .form-input--error:focus { box-shadow: 0 0 0 3px var(--red-dim); }
 
 .form-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B6B82' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 32px;
   cursor: pointer;
 }
-.form-select option { background: var(--surface-3); }
+.form-select option { background: #fff; color: var(--text); }
 
 .form-hint  { font-size: 0.77rem; color: var(--text-3); line-height: 1.4; }
 .form-error { font-size: 0.77rem; color: var(--red); font-weight: 600; }
@@ -2696,8 +2700,8 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   padding: 18px;
 }
 
-/* ── 21. Responsive — Desktop (481px+) ────────────────────────── */
-@media (min-width: 481px) {
+/* ── 21. Responsive — Tablet+ (600px+) ───────────────────────── */
+@media (min-width: 600px) {
   .app-nav__hamburger { display: none; }
   .app-nav__links {
     display: flex;
@@ -2723,15 +2727,70 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   .app-footer { display: none; }
   .app-main { padding-bottom: 0; }
 
-  .dashboard    { max-width: var(--max-w); margin: 0 auto; }
-  .forecast-panel { padding: 24px 20px 36px; max-width: var(--max-w); margin: 0 auto; }
-  .subscribe-page { padding: 24px 20px 36px; }
+  /* ── Full-width layout — no more 520px cap ── */
+  .dashboard,
+  .alert-list-page,
+  .forecast-panel,
+  .subscribe-page,
+  .report-page,
+  .shelters-page {
+    max-width: var(--panel-max);
+    margin: 0 auto;
+    width: 100%;
+  }
 
-  .voice-pipeline__right { padding: 24px 24px; }
+  .forecast-panel { padding: 24px 32px 48px; }
+  .subscribe-page { padding: 24px 32px 48px; }
+
+  .voice-pipeline__right { padding: 24px 32px; }
   .voice-pipeline__left  { width: var(--side-w); }
+}
 
-  .alert-list-page { max-width: var(--max-w); margin: 0 auto; }
-  .shelters-page   { max-width: 640px; margin: 0 auto; }
+/* ── Desktop 2-column dashboard (900px+) ─────────────────────── */
+@media (min-width: 900px) {
+  /* Dashboard becomes a 2-column grid: map left, info right */
+  .dashboard {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    grid-template-rows: auto;
+    grid-template-areas:
+      "location    location"
+      "map         statuswrap"
+      "map         weather"
+      "map         alert"
+      "map         severity"
+      "quicknav    quicknav"
+      "advisories  advisories"
+      "outlook     outlook"
+      "ussd        ussd";
+    align-items: start;
+    gap: 0;
+    padding-bottom: 32px;
+  }
+
+  .location-banner         { grid-area: location; }
+  .dashboard-hero          { grid-area: map; height: calc(100dvh - var(--nav-h) - 56px); position: sticky; top: var(--nav-h); }
+  .dashboard__status-strip-wrap { grid-area: statuswrap; }
+  .dashboard__status-strip-wrap .dashboard__status-strip { border-bottom: none; border-left: 1px solid var(--border); min-height: 44px; }
+  .weather-widget          { grid-area: weather; margin: 0; border-radius: 0; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); border-top: none; border-right: none; }
+  .alert-banner,
+  .dashboard__all-clear,
+  .dashboard__loading,
+  .dashboard__error        { grid-area: alert; margin: 0 0 0 0; border-radius: 0; border-left: 1px solid var(--border); }
+  .dashboard__severity-summary { grid-area: severity; padding: 14px 16px; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .dashboard__quick-nav    { grid-area: quicknav; padding: 16px 24px; border-top: 1px solid var(--border); }
+  .dashboard__heatwave,
+  .dashboard__advisory     { grid-area: advisories; }
+  .dashboard__afo-callout  { grid-area: outlook; margin: 0 24px 8px; }
+  .dashboard__ussd-hint    { grid-area: ussd; margin: 0 24px 16px; }
+
+  /* Quick nav 4-cols with more breathing room */
+  .quick-nav { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  /* Alert list — wider layout */
+  .alert-list-page { max-width: var(--panel-max); }
+  .alert-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px 16px; }
+  .alert-list .alert-card { margin: 0; }
 }
 
 /* ── 22. Responsive — Extra Small (≤360px) ────────────────────── */
@@ -2840,7 +2899,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   position: absolute;
   top: 0; left: 0; right: 0;
   padding: 10px 12px;
-  background: linear-gradient(to bottom, rgba(10,12,16,0.7) 0%, transparent 100%);
+  background: linear-gradient(to bottom, rgba(255,255,255,0.55) 0%, transparent 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2851,22 +2910,23 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .dashboard-hero__label {
   font-size: 0.68rem;
   font-weight: 800;
-  color: rgba(255,255,255,0.85);
+  color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: rgba(0,0,0,0.45);
-  padding: 3px 9px;
+  background: rgba(255,255,255,0.88);
+  padding: 4px 10px;
   border-radius: 20px;
   backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
 }
 
 .dashboard-hero__expand {
   font-size: 0.7rem;
   font-weight: 700;
-  color: var(--sky-light);
-  background: rgba(0,0,0,0.55);
-  border: 1px solid rgba(245,158,11,0.3);
-  padding: 3px 10px;
+  color: var(--sky);
+  background: rgba(255,255,255,0.92);
+  border: 1px solid var(--sky-border);
+  padding: 4px 12px;
   border-radius: 20px;
   backdrop-filter: blur(4px);
   cursor: pointer;
@@ -2874,8 +2934,9 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   text-decoration: none;
   font-family: var(--font);
   transition: background 0.12s;
+  box-shadow: var(--shadow-sm);
 }
-.dashboard-hero__expand:hover { background: rgba(245,158,11,0.15); text-decoration: none; color: var(--sky-light); }
+.dashboard-hero__expand:hover { background: var(--sky-dim); text-decoration: none; color: var(--sky-dark); }
 
 /* ── 26. Hazard Category Filter — Colorful ───────────────────── */
 .hazard-filter {
@@ -3094,13 +3155,14 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   position: absolute;
   bottom: 8px; left: 8px;
   z-index: 500;
-  background: rgba(10,12,16,0.85);
+  background: rgba(255,255,255,0.90);
   backdrop-filter: blur(6px);
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.68rem;
   color: var(--text-3);
   font-weight: 600;
+  border: 1px solid var(--border);
 }
 
 .map-locate-btn {
@@ -3110,9 +3172,9 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 }
 .map-locate-btn button {
   width: 44px; height: 44px;
-  background: rgba(10,12,16,0.88);
+  background: rgba(255,255,255,0.95);
   backdrop-filter: blur(8px);
-  border: 1px solid var(--border-hi);
+  border: 1px solid var(--border);
   border-radius: 50%;
   font-size: 1.2rem;
   cursor: pointer;
@@ -3120,10 +3182,10 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   align-items: center;
   justify-content: center;
   transition: background 0.12s, transform 0.1s;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   color: inherit;
 }
-.map-locate-btn button:hover { background: rgba(245,158,11,0.15); transform: scale(1.07); border-color: var(--sky-border); }
+.map-locate-btn button:hover { background: var(--sky-dim); transform: scale(1.07); border-color: var(--sky-border); }
 .map-locate-btn__error {
   position: absolute;
   bottom: 50px; right: 0;
@@ -3140,13 +3202,14 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   position: absolute;
   top: 50px; right: 8px;
   z-index: 500;
-  background: rgba(10,12,16,0.88);
+  background: rgba(255,255,255,0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--border-hi);
+  border: 1px solid var(--border);
   border-radius: var(--r-xl);
   padding: 12px 14px;
   min-width: 140px;
   max-width: 180px;
+  box-shadow: var(--shadow);
 }
 
 .flood-risk-map__layers-title {

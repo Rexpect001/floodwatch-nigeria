@@ -270,7 +270,9 @@ export default function Dashboard({ lang }: Props) {
       <MapHero lang={lang} />
 
       {/* 3. Live status strip */}
-      <LiveStatusBar alerts={alerts} isLoading={isLoading} />
+      <div className="dashboard__status-strip-wrap">
+        <LiveStatusBar alerts={alerts} isLoading={isLoading} />
+      </div>
 
       {/* 4. Weather for detected location */}
       <WeatherWidget lang={lang} />
