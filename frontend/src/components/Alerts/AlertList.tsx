@@ -228,7 +228,8 @@ export default function AlertList({ lang }: Props) {
             {Object.keys(HAZARD_CATEGORIES).map(cat => (
               <button
                 key={cat}
-                className={`hazard-btn ${hazardCategory === cat ? 'active' : ''} ${cat === 'security' ? 'hazard-btn--security' : ''}`}
+                data-cat={cat}
+                className={`hazard-btn ${hazardCategory === cat ? 'active' : ''}`}
                 onClick={() => setHazardCategory(cat)}
               >
                 {cat === 'flood'    ? '🌊 ' :

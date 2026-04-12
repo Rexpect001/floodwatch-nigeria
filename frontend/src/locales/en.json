@@ -119,7 +119,7 @@
     "success": "Report submitted. Thank you for helping your community.",
     "anonymous_note": "Reports are anonymous. Your phone number is never shared.",
     "security_warning": "Security reports are forwarded to relevant authorities."
-  }
+  },
   "heatwave": {
     "title": "Heat Warning",
     "temp": "{{temp}}°C expected",

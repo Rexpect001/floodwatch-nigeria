@@ -10,7 +10,7 @@
  *  5. River gauges — 273 NIHSA stations
  *  6. Community CBEWS reports (verified only)
  */
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   MapContainer,
@@ -23,6 +23,7 @@ import {
 } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { GeoContext } from '../../App'
 
 // Fix Leaflet default marker icon path broken by bundlers
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -32,10 +33,10 @@ L.Icon.Default.mergeOptions({
   shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
-// User location marker icon (blue dot)
+// User location marker icon — amber glow to match new brand
 const USER_ICON = L.divIcon({
   className: '',
-  html: '<div style="width:16px;height:16px;background:#2196F3;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 4px rgba(33,150,243,0.35)"></div>',
+  html: '<div style="width:16px;height:16px;background:#14B8A6;border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 5px rgba(20,184,166,0.35)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 })
@@ -69,8 +70,20 @@ interface GeoData {
 
 interface Props {
   lang?: string
+  heroMode?:       boolean            // compact view inside Dashboard hero card
   onAlertClick?:   (alertId: string) => void
   onShelterClick?: (shelter: object)  => void
+}
+
+// Fly to user position when GeoContext updates (only inside MapContainer)
+function AutoLocate({ userPos }: { userPos: [number,number] | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (userPos) {
+      map.flyTo(userPos, 10, { animate: true, duration: 1.5 })
+    }
+  }, [userPos?.[0], userPos?.[1]])
+  return null
 }
 
 // ── Locate Me button (inside MapContainer) ───────────────────
@@ -104,11 +117,23 @@ function LocateMeButton({ onLocate }: { onLocate: (latlng: [number,number]) => v
   )
 }
 
-export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
+export default function FloodRiskMap({ onAlertClick, onShelterClick, heroMode }: Props) {
   const { t } = useTranslation()
+  const geo = useContext(GeoContext)
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const [dataAge,   setDataAge]   = useState<string | null>(null)
-  const [userPos,   setUserPos]   = useState<[number,number] | null>(null)
+
+  // Seed position from GeoContext; user can also tap "Locate Me" to update
+  const [userPos, setUserPos] = useState<[number,number] | null>(
+    geo.location ? [geo.location.lat, geo.location.lng] : null
+  )
+
+  // When GeoContext resolves, update userPos
+  useEffect(() => {
+    if (geo.location && !userPos) {
+      setUserPos([geo.location.lat, geo.location.lng])
+    }
+  }, [geo.location])
   const [layers, setLayers] = useState<Record<LayerKey, boolean>>({
     floodRisk: true,
     afo:       true,
@@ -160,6 +185,10 @@ export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
   const toggleLayer = (key: LayerKey) =>
     setLayers(prev => ({ ...prev, [key]: !prev[key] }))
 
+  // Initial map center: user location if known, else Nigeria centroid
+  const initialCenter: [number, number] = userPos ?? [9.08, 8.68]
+  const initialZoom = userPos ? 10 : 6
+
   return (
     <div className="flood-risk-map" aria-label={t('map.aria_label', 'Flood risk map')}>
       {isOffline && (
@@ -169,13 +198,17 @@ export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
       )}
 
       <MapContainer
-        center={[9.08, 8.68]}
-        zoom={6}
+        center={initialCenter}
+        zoom={initialZoom}
         minZoom={4}
         maxZoom={16}
         className="flood-risk-map__canvas"
-        style={{ height: '100%', width: '100%' }}
+        style={{ height: heroMode ? 280 : '100%', width: '100%' }}
+        zoomControl={!heroMode}
+        attributionControl={!heroMode}
       >
+        {/* Auto-fly to user position when GeoContext resolves */}
+        <AutoLocate userPos={userPos} />
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -288,41 +321,55 @@ export default function FloodRiskMap({ onAlertClick, onShelterClick }: Props) {
           />
         )}
 
-        {/* User location marker */}
+        {/* User location marker — "You are here" */}
         {userPos && (
           <Marker position={userPos} icon={USER_ICON}>
-            <Popup><strong>Your location</strong></Popup>
+            <Popup>
+              <div className="map-popup">
+                <strong>📍 You are here</strong>
+                {geo.location?.placeName && <span>{geo.location.placeName}</span>}
+              </div>
+            </Popup>
           </Marker>
         )}
 
-        {/* Locate Me button */}
-        <LocateMeButton onLocate={setUserPos} />
+        {/* Locate Me button (hidden in heroMode — location auto-set) */}
+        {!heroMode && <LocateMeButton onLocate={setUserPos} />}
       </MapContainer>
 
-      {/* Layer toggle panel */}
-      <aside className="flood-risk-map__layers" aria-label={t('map.layers_label', 'Map layers')}>
-        <h3 className="flood-risk-map__layers-title">{t('map.layers_title', 'Layers')}</h3>
-        {(Object.entries(layers) as [LayerKey, boolean][]).map(([key, active]) => (
-          <label key={key} className={`map-layer-toggle ${active ? 'active' : ''}`}>
-            <input
-              type="checkbox"
-              checked={active}
-              onChange={() => toggleLayer(key)}
-              aria-label={t(`map.layers.${key}`, key)}
-            />
-            <span className="map-layer-toggle__label">{t(`map.layers.${key}`, key)}</span>
-          </label>
-        ))}
-        <div className="flood-risk-map__accuracy-notes">
-          <p className="map-accuracy-note">{t('map.lake_chad', 'Lake Chad: ~24,500 km²')}</p>
-          <p className="map-accuracy-note">{t('map.deforestation', 'Deforestation: 3.67%/yr (FAO)')}</p>
-        </div>
-      </aside>
-
-      {dataAge && (
+      {/* Layer toggle panel — hidden in heroMode */}
+      {heroMode && dataAge && (
         <div className="flood-risk-map__staleness" aria-live="polite">
-          {t('offline.cache_age', { timestamp: dataAge })}
+          Data: {dataAge}
         </div>
+      )}
+      {!heroMode && (
+        <>
+          <aside className="flood-risk-map__layers" aria-label={t('map.layers_label', 'Map layers')}>
+            <h3 className="flood-risk-map__layers-title">{t('map.layers_title', 'Layers')}</h3>
+            {(Object.entries(layers) as [LayerKey, boolean][]).map(([key, active]) => (
+              <label key={key} className={`map-layer-toggle ${active ? 'active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={active}
+                  onChange={() => toggleLayer(key)}
+                  aria-label={t(`map.layers.${key}`, key)}
+                />
+                <span className="map-layer-toggle__label">{t(`map.layers.${key}`, key)}</span>
+              </label>
+            ))}
+            <div className="flood-risk-map__accuracy-notes">
+              <p className="map-accuracy-note">{t('map.lake_chad', 'Lake Chad: ~24,500 km²')}</p>
+              <p className="map-accuracy-note">{t('map.deforestation', 'Deforestation: 3.67%/yr (FAO)')}</p>
+            </div>
+          </aside>
+
+          {dataAge && (
+            <div className="flood-risk-map__staleness" aria-live="polite">
+              {t('offline.cache_age', { timestamp: dataAge })}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

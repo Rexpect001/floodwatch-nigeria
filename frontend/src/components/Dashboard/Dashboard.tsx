@@ -1,26 +1,91 @@
 /**
- * Dashboard — landing page
+ * Dashboard v4 — Map-first, location-aware landing page
  *
- * Sections:
- *   1. Active alert banner (RED/ORANGE if any) with evacuate CTA
- *   2. Severity summary cards (count per severity)
- *   3. Quick-access: Map, Forecast, Subscribe
- *   4. Heatwave advisory (when ORANGE+ heat alert active)
- *   5. Data source attribution
+ * Layout:
+ *   1. Location banner — "You are here: Lagos, Lagos State" (auto-detected)
+ *   2. Map hero — FloodRiskMap centred on user, 280px, tap-to-expand
+ *   3. Weather widget for detected location
+ *   4. Active alert banner (RED/ORANGE)
+ *   5. Severity summary cards
+ *   6. Advisory sections (heatwave / drought / landslide / security)
+ *   7. Quick navigation
+ *   8. Seasonal outlook callout
+ *   9. USSD hint
  */
-import React from 'react'
+import React, { useContext, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { alertsApi, type Alert } from '../../api/alertsApi'
 import { forecastsApi, type CurrentWeather } from '../../api/forecastsApi'
 import type { SupportedLang } from '../../i18n'
+import { GeoContext } from '../../App'
+
+const FloodRiskMap = React.lazy(() => import('../Map/FloodRiskMap'))
 
 interface Props { lang: SupportedLang }
 
 const SEVERITY_ORDER = ['RED', 'ORANGE', 'YELLOW', 'GREEN'] as const
 
-// ── Live Status Strip ─────────────────────────────────────────
+// ── Location Banner ───────────────────────────────────────────────
+function LocationBanner() {
+  const { location, status } = useContext(GeoContext)
+
+  if (status === 'loading') {
+    return (
+      <div className="location-banner location-banner__loading" aria-live="polite">
+        <div className="spinner" style={{ width: 12, height: 12 }} aria-hidden />
+        <span>Detecting your location…</span>
+      </div>
+    )
+  }
+
+  if (!location) {
+    return (
+      <div className="location-banner location-banner__error" aria-live="polite">
+        📍 Location unavailable — showing Nigeria overview
+      </div>
+    )
+  }
+
+  return (
+    <div className="location-banner" aria-live="polite" aria-label={`Your location: ${location.placeName}`}>
+      <div className="location-banner__dot" aria-hidden />
+      <div className="location-banner__text">
+        <span className="location-banner__here">You are here</span>
+        <span className="location-banner__place">{location.placeName}</span>
+      </div>
+      {location.source === 'fallback' && (
+        <span style={{ fontSize: '0.65rem', opacity: 0.6, marginLeft: 'auto' }}>
+          Enable location for local alerts
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ── Map Hero ──────────────────────────────────────────────────────
+function MapHero({ lang }: { lang: SupportedLang }) {
+  return (
+    <div className="dashboard-hero">
+      <div className="dashboard-hero__overlay">
+        <span className="dashboard-hero__label">🗺 Live Hazard Map</span>
+        <Link to="/map" className="dashboard-hero__expand">Expand ↗</Link>
+      </div>
+      <div className="dashboard-hero__map">
+        <Suspense fallback={
+          <div style={{ height: '100%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner" style={{ width: 24, height: 24 }} aria-hidden />
+          </div>
+        }>
+          <FloodRiskMap lang={lang} heroMode />
+        </Suspense>
+      </div>
+    </div>
+  )
+}
+
+// ── Live Status Strip ─────────────────────────────────────────────
 function LiveStatusBar({ alerts, isLoading }: { alerts: Alert[]; isLoading: boolean }) {
   if (isLoading) return null
   const red    = alerts.filter(a => a.severity === 'RED').length
@@ -64,13 +129,13 @@ function LiveStatusBar({ alerts, isLoading }: { alerts: Alert[]; isLoading: bool
   )
 }
 
-// ── Weather Widget ────────────────────────────────────────────
+// ── Weather Widget ────────────────────────────────────────────────
 function WeatherWidget({ lang }: { lang: SupportedLang }) {
-  const LGA_ABUJA = 1  // fallback LGA until geolocation is wired
+  const LGA_ABUJA = 1  // TODO: resolve detected LGA from coordinates
   const { data: weather, isLoading } = useQuery<CurrentWeather>({
     queryKey: ['weather', lang],
     queryFn: () => forecastsApi.getWeather(LGA_ABUJA, lang),
-    refetchInterval: 15 * 60 * 1000,  // 15 min
+    refetchInterval: 15 * 60 * 1000,
     retry: 1,
   })
 
@@ -146,20 +211,20 @@ function AlertBanner({ alert }: { alert: Alert }) {
 function SeverityCard({ severity, count }: { severity: string; count: number }) {
   const { t } = useTranslation()
   return (
-    <div className={`severity-card severity-card--${severity.toLowerCase()}`}>
-      <span className="severity-card__label">{t(`severity.${severity}`)}</span>
+    <Link to={`/alerts?severity=${severity}`} className={`severity-card severity-card--${severity.toLowerCase()}`} style={{ textDecoration: 'none' }}>
       <span className="severity-card__count">{count}</span>
-    </div>
+      <span className="severity-card__label">{t(`severity.${severity}`)}</span>
+    </Link>
   )
 }
 
 function QuickNav() {
   const { t } = useTranslation()
   const items = [
-    { to: '/map',       label: t('nav.map'),      icon: '🗺️' },
-    { to: '/forecast',  label: t('nav.forecast'), icon: '📊' },
-    { to: '/subscribe', label: t('nav.subscribe'),icon: '📱' },
-    { to: '/alerts',    label: t('nav.alerts'),   icon: '🚨' },
+    { to: '/map',       label: t('nav.map'),       icon: '🗺️' },
+    { to: '/alerts',    label: t('nav.alerts'),    icon: '🚨' },
+    { to: '/subscribe', label: t('nav.subscribe'), icon: '📱' },
+    { to: '/report',    label: 'Report',           icon: '📝' },
   ]
   return (
     <nav className="quick-nav" aria-label="Quick navigation">
@@ -179,32 +244,38 @@ export default function Dashboard({ lang }: Props) {
   const { data: alerts = [], isLoading, isError } = useQuery({
     queryKey: ['alerts', lang],
     queryFn: () => alertsApi.list({ lang }),
-    refetchInterval: 60_000,   // refresh every 60s
+    refetchInterval: 60_000,
   })
 
-  const topAlert = alerts.find(a => a.severity === 'RED') || alerts.find(a => a.severity === 'ORANGE')
-  const heatAlert      = alerts.find(a => a.alert_type === 'HEATWAVE'  && ['RED','ORANGE'].includes(a.severity))
-  const droughtAlert   = alerts.find(a => a.alert_type === 'DROUGHT'   && ['RED','ORANGE'].includes(a.severity))
-  const landslideAlert = alerts.find(a => a.alert_type === 'LANDSLIDE' && ['RED','ORANGE'].includes(a.severity))
-  const securityAlert  = alerts.find(a =>
+  const topAlert      = alerts.find((a: Alert) => a.severity === 'RED') || alerts.find((a: Alert) => a.severity === 'ORANGE')
+  const heatAlert      = alerts.find((a: Alert) => a.alert_type === 'HEATWAVE'  && ['RED','ORANGE'].includes(a.severity))
+  const droughtAlert   = alerts.find((a: Alert) => a.alert_type === 'DROUGHT'   && ['RED','ORANGE'].includes(a.severity))
+  const landslideAlert = alerts.find((a: Alert) => a.alert_type === 'LANDSLIDE' && ['RED','ORANGE'].includes(a.severity))
+  const securityAlert  = alerts.find((a: Alert) =>
     ['BANDITRY','INSURGENCY','COMMUNAL_CONFLICT','CIVIL_UNREST','KIDNAPPING_HOTSPOT','TERRORISM'].includes(a.alert_type)
     && ['RED','ORANGE'].includes(a.severity)
   )
 
   const countBySeverity = SEVERITY_ORDER.reduce(
-    (acc, s) => ({ ...acc, [s]: alerts.filter(a => a.severity === s).length }),
+    (acc, s) => ({ ...acc, [s]: alerts.filter((a: Alert) => a.severity === s).length }),
     {} as Record<string, number>
   )
 
   return (
     <div className="dashboard">
-      {/* Live status strip */}
+      {/* 1. Location banner */}
+      <LocationBanner />
+
+      {/* 2. Map hero */}
+      <MapHero lang={lang} />
+
+      {/* 3. Live status strip */}
       <LiveStatusBar alerts={alerts} isLoading={isLoading} />
 
-      {/* Weather widget */}
+      {/* 4. Weather for detected location */}
       <WeatherWidget lang={lang} />
 
-      {/* Critical alert banner */}
+      {/* 5. Critical alert banner */}
       {topAlert && <AlertBanner alert={topAlert} />}
 
       {!topAlert && !isLoading && (
@@ -225,7 +296,7 @@ export default function Dashboard({ lang }: Props) {
         </div>
       )}
 
-      {/* Severity summary */}
+      {/* 6. Severity summary */}
       {alerts.length > 0 && (
         <section className="dashboard__severity-summary" aria-label="Alert severity summary">
           <h2 className="dashboard__section-title">{t('alerts.active')}</h2>
@@ -237,7 +308,7 @@ export default function Dashboard({ lang }: Props) {
         </section>
       )}
 
-      {/* Heatwave advisory */}
+      {/* 7. Advisory sections */}
       {heatAlert && (
         <section className="dashboard__heatwave dashboard__advisory" aria-label="Heat advisory" role="note">
           <h2 className="dashboard__section-title">🔥 {t('heatwave.title')}</h2>
@@ -246,7 +317,6 @@ export default function Dashboard({ lang }: Props) {
         </section>
       )}
 
-      {/* Drought advisory */}
       {droughtAlert && (
         <section className="dashboard__advisory" aria-label="Drought advisory" role="note">
           <h2 className="dashboard__section-title">🏜️ Drought Warning</h2>
@@ -254,7 +324,6 @@ export default function Dashboard({ lang }: Props) {
         </section>
       )}
 
-      {/* Landslide advisory */}
       {landslideAlert && (
         <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
           <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
@@ -262,7 +331,6 @@ export default function Dashboard({ lang }: Props) {
         </section>
       )}
 
-      {/* Security advisory */}
       {securityAlert && (
         <section className="dashboard__advisory dashboard__advisory--security" aria-label="Security advisory" role="alert">
           <h2 className="dashboard__section-title">
@@ -278,12 +346,12 @@ export default function Dashboard({ lang }: Props) {
         </section>
       )}
 
-      {/* Quick navigation */}
+      {/* 8. Quick navigation */}
       <section className="dashboard__quick-nav" aria-label="Quick access">
         <QuickNav />
       </section>
 
-      {/* Seasonal outlook callout */}
+      {/* 9. Seasonal outlook callout */}
       <section className="dashboard__afo-callout">
         <h2 className="dashboard__section-title">📋 Seasonal Hazard Outlook (NIHSA / NEMA)</h2>
         <div className="dashboard__outlook-grid">
@@ -309,7 +377,7 @@ export default function Dashboard({ lang }: Props) {
         </p>
       </section>
 
-      {/* USSD access hint */}
+      {/* 10. USSD access hint */}
       <div className="dashboard__ussd-hint">
         No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
       </div>

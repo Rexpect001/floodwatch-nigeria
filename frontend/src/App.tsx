@@ -1,24 +1,43 @@
 /**
- * FloodWatch Nigeria — App shell + React Router
+ * HazardWatch Nigeria — App shell + React Router
  *
  * Routes:
  *   /            → Dashboard
  *   /map         → FloodRiskMap
  *   /forecast    → ForecastPanel
  *   /alerts      → AlertList
- *   /shelters    → Shelters (redirect to /alerts?tab=shelters for now)
+ *   /shelters    → SheltersPage
  *   /report      → ReportForm
  *   /subscribe   → SubscribeForm
  *   /voice       → VoicePipeline (NEMA officers only)
+ *
+ * Geolocation: On first load, browser GPS → IP fallback → Nigeria centroid.
+ * Detected coords passed as context so Dashboard + Map auto-center on user.
  */
-import React, { Suspense, useState } from 'react'
-import { BrowserRouter, Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
+import React, { Suspense, useState, useEffect, createContext, useContext } from 'react'
+import { BrowserRouter, Routes, Route, NavLink, Navigate } from 'react-router-dom'
 import './index.css'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import './i18n'
 
 import { SUPPORTED_LANGUAGES, type SupportedLang } from './i18n'
+
+// ── Geolocation context ──────────────────────────────────────────
+export interface UserLocation {
+  lat: number
+  lng: number
+  accuracy?: number
+  placeName?: string    // "Lagos, Lagos State" — resolved from coords
+  source: 'gps' | 'ip' | 'fallback'
+}
+
+interface GeoCtx {
+  location: UserLocation | null
+  status:   'loading' | 'granted' | 'denied' | 'error'
+}
+
+export const GeoContext = createContext<GeoCtx>({ location: null, status: 'loading' })
 
 // Lazy-loaded route components
 const Dashboard         = React.lazy(() => import('./components/Dashboard/Dashboard'))
@@ -29,6 +48,75 @@ const SubscribeForm     = React.lazy(() => import('./components/Subscribe/Subscr
 const SheltersPage      = React.lazy(() => import('./components/Shelters/SheltersPage'))
 const ReportForm        = React.lazy(() => import('./components/Report/ReportForm'))
 const VoicePipeline     = React.lazy(() => import('./components/VoicePipeline/VoicePipeline'))
+
+// ── Reverse-geocode coords → "City, State" via Nominatim (free, no key) ──
+async function reverseGeocode(lat: number, lng: number): Promise<string> {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10`,
+      { headers: { 'Accept-Language': 'en' } }
+    )
+    const d = await r.json()
+    const addr = d.address || {}
+    const city  = addr.city || addr.town || addr.village || addr.county || ''
+    const state = addr.state || ''
+    return [city, state].filter(Boolean).join(', ') || 'Nigeria'
+  } catch {
+    return 'Nigeria'
+  }
+}
+
+// ── IP geolocation fallback (free, no key needed) ────────────────
+async function ipGeolocate(): Promise<{ lat: number; lng: number; city: string; region: string }> {
+  const r = await fetch('https://ipapi.co/json/')
+  const d = await r.json()
+  return { lat: parseFloat(d.latitude), lng: parseFloat(d.longitude), city: d.city || '', region: d.region || '' }
+}
+
+// ── useGeolocation hook ───────────────────────────────────────────
+function useGeolocation(): GeoCtx {
+  const [ctx, setCtx] = useState<GeoCtx>({ location: null, status: 'loading' })
+
+  useEffect(() => {
+    let cancelled = false
+
+    const setLocation = (loc: UserLocation) => {
+      if (!cancelled) setCtx({ location: loc, status: 'granted' })
+    }
+
+    const tryGPS = () => {
+      if (!navigator.geolocation) { tryIP(); return }
+      navigator.geolocation.getCurrentPosition(
+        async pos => {
+          const { latitude: lat, longitude: lng, accuracy } = pos.coords
+          const placeName = await reverseGeocode(lat, lng)
+          setLocation({ lat, lng, accuracy, placeName, source: 'gps' })
+        },
+        () => tryIP(),
+        { timeout: 7000, maximumAge: 300_000 }
+      )
+    }
+
+    const tryIP = async () => {
+      try {
+        const { lat, lng, city, region } = await ipGeolocate()
+        if (!cancelled) setLocation({
+          lat, lng,
+          placeName: [city, region].filter(Boolean).join(', ') || 'Nigeria',
+          source: 'ip',
+        })
+      } catch {
+        // Final fallback: centre of Nigeria
+        if (!cancelled) setLocation({ lat: 9.08, lng: 8.68, placeName: 'Nigeria', source: 'fallback' })
+      }
+    }
+
+    tryGPS()
+    return () => { cancelled = true }
+  }, [])
+
+  return ctx
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -214,51 +302,54 @@ function PageLoader() {
 export default function App() {
   const { i18n } = useTranslation()
   const [lang, setLang] = useState<SupportedLang>(
-    (localStorage.getItem('floodwatch_lang') as SupportedLang) || 'en'
+    (localStorage.getItem('hazardwatch_lang') as SupportedLang) || 'en'
   )
+  const geo = useGeolocation()
 
   const handleLangChange = (newLang: SupportedLang) => {
     setLang(newLang)
     i18n.changeLanguage(newLang)
-    localStorage.setItem('floodwatch_lang', newLang)
+    localStorage.setItem('hazardwatch_lang', newLang)
     document.documentElement.lang = newLang
     // RTL for Hausa (Arabic script)
     document.documentElement.dir = newLang === 'ha' ? 'rtl' : 'ltr'
   }
 
   // Apply RTL on initial load
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.dir = lang === 'ha' ? 'rtl' : 'ltr'
     document.documentElement.lang = lang
   }, [])
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <div className="app-shell">
-          <AppNav lang={lang} onLangChange={handleLangChange} />
+    <GeoContext.Provider value={geo}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <div className="app-shell">
+            <AppNav lang={lang} onLangChange={handleLangChange} />
 
-          <main className="app-main" id="main-content">
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/"          element={<Dashboard lang={lang} />} />
-                <Route path="/map"       element={<FloodRiskMap lang={lang} />} />
-                <Route path="/forecast"  element={<ForecastPanel lang={lang} />} />
-                <Route path="/alerts"    element={<AlertList lang={lang} />} />
-                <Route path="/shelters"  element={<SheltersPage lang={lang} />} />
-                <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
-                <Route path="/report"   element={<ReportForm lang={lang} />} />
-                <Route path="/voice/*"  element={<VoiceGate />} />
-                <Route path="*"          element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </main>
+            <main className="app-main" id="main-content">
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/"          element={<Dashboard lang={lang} />} />
+                  <Route path="/map"       element={<FloodRiskMap lang={lang} />} />
+                  <Route path="/forecast"  element={<ForecastPanel lang={lang} />} />
+                  <Route path="/alerts"    element={<AlertList lang={lang} />} />
+                  <Route path="/shelters"  element={<SheltersPage lang={lang} />} />
+                  <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
+                  <Route path="/report"    element={<ReportForm lang={lang} />} />
+                  <Route path="/voice/*"   element={<VoiceGate />} />
+                  <Route path="*"          element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </main>
 
-          <footer className="app-footer">
-            <BottomTabBar />
-          </footer>
-        </div>
-      </BrowserRouter>
-    </QueryClientProvider>
+            <footer className="app-footer">
+              <BottomTabBar />
+            </footer>
+          </div>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </GeoContext.Provider>
   )
 }
