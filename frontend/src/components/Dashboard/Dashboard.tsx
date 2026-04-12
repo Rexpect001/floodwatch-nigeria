@@ -218,25 +218,6 @@ function SeverityCard({ severity, count }: { severity: string; count: number }) 
   )
 }
 
-function QuickNav() {
-  const { t } = useTranslation()
-  const items = [
-    { to: '/map',       label: t('nav.map'),       icon: '🗺️' },
-    { to: '/alerts',    label: t('nav.alerts'),    icon: '🚨' },
-    { to: '/subscribe', label: t('nav.subscribe'), icon: '📱' },
-    { to: '/report',    label: 'Report',           icon: '📝' },
-  ]
-  return (
-    <nav className="quick-nav" aria-label="Quick navigation">
-      {items.map(item => (
-        <Link key={item.to} to={item.to} className="quick-nav__item">
-          <span className="quick-nav__icon" aria-hidden>{item.icon}</span>
-          <span className="quick-nav__label">{item.label}</span>
-        </Link>
-      ))}
-    </nav>
-  )
-}
 
 export default function Dashboard({ lang }: Props) {
   const { t } = useTranslation()
@@ -263,125 +244,120 @@ export default function Dashboard({ lang }: Props) {
 
   return (
     <div className="dashboard">
-      {/* 1. Location banner */}
+      {/* ── Location banner — full width ── */}
       <LocationBanner />
 
-      {/* 2. Map hero */}
-      <MapHero lang={lang} />
+      {/* ── Two-column body: map left, info right ── */}
+      <div className="dashboard__body">
 
-      {/* 3. Live status strip */}
-      <div className="dashboard__status-strip-wrap">
-        <LiveStatusBar alerts={alerts} isLoading={isLoading} />
-      </div>
-
-      {/* 4. Weather for detected location */}
-      <WeatherWidget lang={lang} />
-
-      {/* 5. Critical alert banner */}
-      {topAlert && <AlertBanner alert={topAlert} />}
-
-      {!topAlert && !isLoading && (
-        <div className="dashboard__all-clear" role="status">
-          <span aria-hidden>✅</span> {t('alerts.none')}
+        {/* Left: sticky map */}
+        <div className="dashboard__map-col">
+          <MapHero lang={lang} />
         </div>
-      )}
 
-      {isLoading && (
-        <div className="dashboard__loading" role="status" aria-live="polite">
-          <div className="spinner" aria-hidden /> {t('alerts.active')}…
+        {/* Right: scrollable info panel */}
+        <div className="dashboard__info-col">
+
+          {/* Live status strip */}
+          <LiveStatusBar alerts={alerts} isLoading={isLoading} />
+
+          {/* Weather widget */}
+          <WeatherWidget lang={lang} />
+
+          {/* Critical alert banner */}
+          {topAlert && <AlertBanner alert={topAlert} />}
+
+          {!topAlert && !isLoading && (
+            <div className="dashboard__all-clear" role="status">
+              <span aria-hidden>✅</span> {t('alerts.none')}
+            </div>
+          )}
+          {isLoading && (
+            <div className="dashboard__loading" role="status" aria-live="polite">
+              <div className="spinner" aria-hidden /> {t('alerts.active')}…
+            </div>
+          )}
+          {isError && (
+            <div className="dashboard__error" role="alert">
+              Unable to load alerts. Showing cached data.
+            </div>
+          )}
+
+          {/* Severity summary */}
+          {alerts.length > 0 && (
+            <section className="dashboard__severity-summary" aria-label="Alert severity summary">
+              <h2 className="dashboard__section-title">{t('alerts.active')}</h2>
+              <div className="severity-cards">
+                {SEVERITY_ORDER.map(s => (
+                  <SeverityCard key={s} severity={s} count={countBySeverity[s]} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Advisories */}
+          {heatAlert && (
+            <section className="dashboard__heatwave dashboard__advisory" aria-label="Heat advisory" role="note">
+              <h2 className="dashboard__section-title">🔥 {t('heatwave.title')}</h2>
+              <p className="heatwave__advice">{t('heatwave.advice')}</p>
+              <p className="heatwave__threshold"><small>{t('heatwave.threshold')}</small></p>
+            </section>
+          )}
+          {droughtAlert && (
+            <section className="dashboard__advisory" aria-label="Drought advisory" role="note">
+              <h2 className="dashboard__section-title">🏜️ Drought Warning</h2>
+              <p>Water scarcity conditions active. Conserve water. Check on vulnerable communities in affected LGAs.</p>
+            </section>
+          )}
+          {landslideAlert && (
+            <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
+              <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
+              <p>Avoid hilly terrain and unstable slopes. Do not cross flooded roads or embankments in affected areas.</p>
+            </section>
+          )}
+          {securityAlert && (
+            <section className="dashboard__advisory dashboard__advisory--security" aria-label="Security advisory" role="alert">
+              <h2 className="dashboard__section-title">
+                🔫 Security Alert — {securityAlert.alert_type.replace(/_/g, ' ')}
+              </h2>
+              <p>{securityAlert.body}</p>
+              <p className="dashboard__advisory-action">
+                <strong>Stay indoors. Avoid the affected area. Call 112 for emergencies.</strong>
+              </p>
+              <p className="dashboard__advisory-source">
+                <small>Source: {securityAlert.data_source_label} · {securityAlert.last_updated}</small>
+              </p>
+            </section>
+          )}
+
+          {/* Seasonal outlook */}
+          <section className="dashboard__afo-callout">
+            <h2 className="dashboard__section-title">📋 Seasonal Hazard Outlook</h2>
+            <div className="dashboard__outlook-grid">
+              <div className="dashboard__outlook-item">
+                <span>🌊</span>
+                <span><strong>{t('forecast.afo_window')}</strong> · <Link to="/forecast">{t('forecast.afo_title')}</Link></span>
+              </div>
+              <div className="dashboard__outlook-item">
+                <span>🔥</span>
+                <span>Heatwave: <strong>Sokoto, Borno, Yobe</strong> (Apr–Jun)</span>
+              </div>
+              <div className="dashboard__outlook-item">
+                <span>🏜️</span>
+                <span>Drought: <strong>Northeast / Sahel belt</strong></span>
+              </div>
+              <div className="dashboard__outlook-item">
+                <span>⛰️</span>
+                <span>Landslide: <strong>Anambra, Enugu, Cross River</strong></span>
+              </div>
+            </div>
+          </section>
+
+          {/* USSD hint */}
+          <div className="dashboard__ussd-hint">
+            No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
+          </div>
         </div>
-      )}
-
-      {isError && (
-        <div className="dashboard__error" role="alert">
-          Unable to load alerts. Showing cached data.
-        </div>
-      )}
-
-      {/* 6. Severity summary */}
-      {alerts.length > 0 && (
-        <section className="dashboard__severity-summary" aria-label="Alert severity summary">
-          <h2 className="dashboard__section-title">{t('alerts.active')}</h2>
-          <div className="severity-cards">
-            {SEVERITY_ORDER.map(s => (
-              <SeverityCard key={s} severity={s} count={countBySeverity[s]} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 7. Advisory sections */}
-      {heatAlert && (
-        <section className="dashboard__heatwave dashboard__advisory" aria-label="Heat advisory" role="note">
-          <h2 className="dashboard__section-title">🔥 {t('heatwave.title')}</h2>
-          <p className="heatwave__advice">{t('heatwave.advice')}</p>
-          <p className="heatwave__threshold"><small>{t('heatwave.threshold')}</small></p>
-        </section>
-      )}
-
-      {droughtAlert && (
-        <section className="dashboard__advisory" aria-label="Drought advisory" role="note">
-          <h2 className="dashboard__section-title">🏜️ Drought Warning</h2>
-          <p>Water scarcity conditions active. Conserve water. Check on vulnerable communities in affected LGAs.</p>
-        </section>
-      )}
-
-      {landslideAlert && (
-        <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
-          <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
-          <p>Avoid hilly terrain and unstable slopes. Do not cross flooded roads or embankments in affected areas.</p>
-        </section>
-      )}
-
-      {securityAlert && (
-        <section className="dashboard__advisory dashboard__advisory--security" aria-label="Security advisory" role="alert">
-          <h2 className="dashboard__section-title">
-            🔫 Security Alert — {securityAlert.alert_type.replace(/_/g, ' ')}
-          </h2>
-          <p>{securityAlert.body}</p>
-          <p className="dashboard__advisory-action">
-            <strong>Stay indoors. Avoid the affected area. Call 112 for emergencies.</strong>
-          </p>
-          <p className="dashboard__advisory-source">
-            <small>Source: {securityAlert.data_source_label} · {securityAlert.last_updated}</small>
-          </p>
-        </section>
-      )}
-
-      {/* 8. Quick navigation */}
-      <section className="dashboard__quick-nav" aria-label="Quick access">
-        <QuickNav />
-      </section>
-
-      {/* 9. Seasonal outlook callout */}
-      <section className="dashboard__afo-callout">
-        <h2 className="dashboard__section-title">📋 Seasonal Hazard Outlook (NIHSA / NEMA)</h2>
-        <div className="dashboard__outlook-grid">
-          <div className="dashboard__outlook-item">
-            <span>🌊</span>
-            <span><strong>{t('forecast.afo_window')}</strong> · <Link to="/forecast">{t('forecast.afo_title')}</Link></span>
-          </div>
-          <div className="dashboard__outlook-item">
-            <span>🔥</span>
-            <span>Heatwave risk: <strong>Sokoto, Borno, Yobe</strong> (Apr–Jun)</span>
-          </div>
-          <div className="dashboard__outlook-item">
-            <span>🏜️</span>
-            <span>Drought watch: <strong>Northeast / Sahel belt</strong></span>
-          </div>
-          <div className="dashboard__outlook-item">
-            <span>⛰️</span>
-            <span>Landslide risk: <strong>Anambra, Enugu, Cross River</strong> (rainy season)</span>
-          </div>
-        </div>
-        <p className="dashboard__accuracy-note">
-          {t('map.lake_chad')} · {t('map.deforestation')}
-        </p>
-      </section>
-
-      {/* 10. USSD access hint */}
-      <div className="dashboard__ussd-hint">
-        No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
       </div>
     </div>
   )

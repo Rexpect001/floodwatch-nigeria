@@ -2748,47 +2748,61 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 
 /* ── Desktop 2-column dashboard (900px+) ─────────────────────── */
 @media (min-width: 900px) {
-  /* Dashboard becomes a 2-column grid: map left, info right */
-  .dashboard {
-    display: grid;
-    grid-template-columns: 1fr 400px;
-    grid-template-rows: auto;
-    grid-template-areas:
-      "location    location"
-      "map         statuswrap"
-      "map         weather"
-      "map         alert"
-      "map         severity"
-      "quicknav    quicknav"
-      "advisories  advisories"
-      "outlook     outlook"
-      "ussd        ussd";
-    align-items: start;
-    gap: 0;
-    padding-bottom: 32px;
+  .dashboard { overflow: hidden; }
+
+  /* Two-column flex body */
+  .dashboard__body {
+    display: flex;
+    align-items: flex-start;
+    min-height: calc(100dvh - var(--nav-h) - 44px); /* subtract location banner */
   }
 
-  .location-banner         { grid-area: location; }
-  .dashboard-hero          { grid-area: map; height: calc(100dvh - var(--nav-h) - 56px); position: sticky; top: var(--nav-h); }
-  .dashboard__status-strip-wrap { grid-area: statuswrap; }
-  .dashboard__status-strip-wrap .dashboard__status-strip { border-bottom: none; border-left: 1px solid var(--border); min-height: 44px; }
-  .weather-widget          { grid-area: weather; margin: 0; border-radius: 0; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); border-top: none; border-right: none; }
-  .alert-banner,
-  .dashboard__all-clear,
-  .dashboard__loading,
-  .dashboard__error        { grid-area: alert; margin: 0 0 0 0; border-radius: 0; border-left: 1px solid var(--border); }
-  .dashboard__severity-summary { grid-area: severity; padding: 14px 16px; border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .dashboard__quick-nav    { grid-area: quicknav; padding: 16px 24px; border-top: 1px solid var(--border); }
-  .dashboard__heatwave,
-  .dashboard__advisory     { grid-area: advisories; }
-  .dashboard__afo-callout  { grid-area: outlook; margin: 0 24px 8px; }
-  .dashboard__ussd-hint    { grid-area: ussd; margin: 0 24px 16px; }
+  /* Left column — sticky map fills full remaining height */
+  .dashboard__map-col {
+    flex: 1;
+    position: sticky;
+    top: var(--nav-h);
+    height: calc(100dvh - var(--nav-h));
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+  .dashboard__map-col .dashboard-hero {
+    height: 100%;
+  }
+  .dashboard__map-col .dashboard-hero__map,
+  .dashboard__map-col .dashboard-hero__map > div,
+  .dashboard__map-col .dashboard-hero__map .leaflet-container {
+    height: 100% !important;
+  }
 
-  /* Quick nav 4-cols with more breathing room */
-  .quick-nav { grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  /* Right column — scrolls independently */
+  .dashboard__info-col {
+    width: 400px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: calc(100dvh - var(--nav-h));
+    background: var(--bg);
+  }
 
-  /* Alert list — wider layout */
-  .alert-list-page { max-width: var(--panel-max); }
+  /* Tighten info-col widgets — remove extra margins */
+  .dashboard__info-col .weather-widget {
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+  .dashboard__info-col .alert-banner,
+  .dashboard__info-col .dashboard__all-clear,
+  .dashboard__info-col .dashboard__loading {
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+  .dashboard__info-col .dashboard__afo-callout { margin: 8px 14px; }
+
+  /* Alert list — 2-column card grid on wide screens */
   .alert-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px 16px; }
   .alert-list .alert-card { margin: 0; }
 }
@@ -2893,6 +2907,13 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 .dashboard-hero__map {
   width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.dashboard-hero__map > div,
+.dashboard-hero__map .leaflet-container {
+  flex: 1;
+  height: 100% !important;
 }
 
 .dashboard-hero__overlay {

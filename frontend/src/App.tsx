@@ -66,11 +66,24 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
   }
 }
 
-// ── IP geolocation fallback (free, no key needed) ────────────────
+// ── Nigeria bounding box — clamp location to within Nigeria ──────
+// Lat 4.27–13.89, Lng 2.67–14.68
+function isInNigeria(lat: number, lng: number): boolean {
+  return lat >= 4.0 && lat <= 14.2 && lng >= 2.5 && lng <= 15.0
+}
+
+// ── IP geolocation fallback (free, no key needed) ─────────────────
 async function ipGeolocate(): Promise<{ lat: number; lng: number; city: string; region: string }> {
   const r = await fetch('https://ipapi.co/json/')
   const d = await r.json()
   return { lat: parseFloat(d.latitude), lng: parseFloat(d.longitude), city: d.city || '', region: d.region || '' }
+}
+
+// Nigeria centroid — used whenever no valid in-country location is found
+const NIGERIA_CENTER: UserLocation = {
+  lat: 9.08, lng: 8.68,
+  placeName: 'Nigeria',
+  source: 'fallback',
 }
 
 // ── useGeolocation hook ───────────────────────────────────────────
@@ -89,8 +102,14 @@ function useGeolocation(): GeoCtx {
       navigator.geolocation.getCurrentPosition(
         async pos => {
           const { latitude: lat, longitude: lng, accuracy } = pos.coords
-          const placeName = await reverseGeocode(lat, lng)
-          setLocation({ lat, lng, accuracy, placeName, source: 'gps' })
+          // Only use GPS coords if they are inside Nigeria
+          if (isInNigeria(lat, lng)) {
+            const placeName = await reverseGeocode(lat, lng)
+            setLocation({ lat, lng, accuracy, placeName, source: 'gps' })
+          } else {
+            // User is outside Nigeria (e.g. developer abroad) — default to Nigeria
+            setLocation(NIGERIA_CENTER)
+          }
         },
         () => tryIP(),
         { timeout: 7000, maximumAge: 300_000 }
@@ -100,14 +119,18 @@ function useGeolocation(): GeoCtx {
     const tryIP = async () => {
       try {
         const { lat, lng, city, region } = await ipGeolocate()
-        if (!cancelled) setLocation({
-          lat, lng,
-          placeName: [city, region].filter(Boolean).join(', ') || 'Nigeria',
-          source: 'ip',
-        })
+        if (isInNigeria(lat, lng)) {
+          setLocation({
+            lat, lng,
+            placeName: [city, region].filter(Boolean).join(', ') || 'Nigeria',
+            source: 'ip',
+          })
+        } else {
+          // IP is outside Nigeria — use Nigeria centroid
+          setLocation(NIGERIA_CENTER)
+        }
       } catch {
-        // Final fallback: centre of Nigeria
-        if (!cancelled) setLocation({ lat: 9.08, lng: 8.68, placeName: 'Nigeria', source: 'fallback' })
+        if (!cancelled) setLocation(NIGERIA_CENTER)
       }
     }
 
