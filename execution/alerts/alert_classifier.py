@@ -3,12 +3,14 @@ Alert Orchestration — Severity Classifier & Multilingual Payload Builder
 
 Consumes Redis pub/sub events from ingestion services.
 Rules:
-  1. RED requires 2+ source confirmation (NEMA standard)
+  1. RED requires 2+ source confirmation (NEMA standard) — except security events
   2. Laggo Dam release → immediate cross-ref with NIHSA discharge
   3. Heatwave > 40°C → ORANGE; > 44°C → RED (2024 Sokoto 44.8°C record)
   4. Discharge > 2024 baseline → escalate severity
   5. Google Flood Hub inundation >= 20% → PROBABLE+ classification
   6. Deduplication: suppress duplicate alerts within 6h window
+  7. Security events (ACLED): TERRORISM/INSURGENCY → RED immediately (no 2nd source required)
+     BANDITRY/KIDNAPPING_HOTSPOT → ORANGE; COMMUNAL_CONFLICT/CIVIL_UNREST → YELLOW
 
 Run: python -m execution.alerts.alert_classifier
 """
@@ -31,11 +33,17 @@ log = logging.getLogger(__name__)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
 
-# Thresholds
+# Thresholds — climate
 HEATWAVE_ORANGE_C = 40.0
 HEATWAVE_RED_C    = 44.0    # near 2024 Sokoto record 44.8°C
 FLOOD_HUB_INUNDATION_THRESHOLD = 20.0  # % community area
 DEDUP_WINDOW_H    = 6       # hours
+
+# Security event classification
+SECURITY_RED_TYPES    = {"TERRORISM", "INSURGENCY"}
+SECURITY_ORANGE_TYPES = {"BANDITRY", "KIDNAPPING_HOTSPOT", "ARMED_CLASH"}
+SECURITY_YELLOW_TYPES = {"COMMUNAL_CONFLICT", "CIVIL_UNREST"}
+ALL_SECURITY_TYPES    = SECURITY_RED_TYPES | SECURITY_ORANGE_TYPES | SECURITY_YELLOW_TYPES | {"OTHER"}
 
 
 @dataclass
@@ -64,12 +72,11 @@ async def classify_and_publish(event: AlertEvent, redis) -> Optional[dict]:
         log.debug(f"Suppressed duplicate alert: {dedup_key}")
         return None
 
-    # RED requires 2-source confirmation
-    if severity == "RED":
+    # RED requires 2-source confirmation — EXCEPT security events (single ACLED source is sufficient)
+    if severity == "RED" and event.event_type not in ALL_SECURITY_TYPES:
         confirmed = await _confirm_red_alert(event, redis)
         if not confirmed:
             log.info(f"RED alert pending 2nd source confirmation: lga={event.lga_id}")
-            # Store as pending; will be promoted when 2nd source arrives
             await _store_pending_red(event, redis)
             return None
 
@@ -126,6 +133,17 @@ def _compute_severity(event: AlertEvent) -> str:
     if event.event_type == "EVACUATION":
         return "RED"
 
+    # Security events — classified by type and fatality count
+    if event.event_type in ALL_SECURITY_TYPES:
+        fatalities = data.get("fatalities", 0)
+        if event.event_type in SECURITY_RED_TYPES or fatalities > 5:
+            return "RED"
+        if event.event_type in SECURITY_ORANGE_TYPES or fatalities >= 1:
+            return "ORANGE"
+        if event.event_type in SECURITY_YELLOW_TYPES:
+            return "YELLOW"
+        return "GREEN"
+
     return event.severity_hint or "YELLOW"
 
 
@@ -180,7 +198,10 @@ async def main():
     """Subscribe to Redis channels and process events."""
     r = aioredis.from_url(REDIS_URL)
     pubsub = r.pubsub()
-    await pubsub.subscribe("weather_events", "flood_events", "dam_releases", "nema_alerts")
+    await pubsub.subscribe(
+        "weather_events", "flood_events", "dam_releases",
+        "nema_alerts", "security_events",   # ACLED security incidents
+    )
     log.info("Alert classifier listening on Redis channels...")
 
     async for message in pubsub.listen():

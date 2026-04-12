@@ -183,9 +183,13 @@ export default function Dashboard({ lang }: Props) {
   })
 
   const topAlert = alerts.find(a => a.severity === 'RED') || alerts.find(a => a.severity === 'ORANGE')
-  const heatAlert = alerts.find(a => a.alert_type === 'HEATWAVE' && ['RED','ORANGE'].includes(a.severity))
-  const droughtAlert = alerts.find(a => a.alert_type === 'DROUGHT' && ['RED','ORANGE'].includes(a.severity))
+  const heatAlert      = alerts.find(a => a.alert_type === 'HEATWAVE'  && ['RED','ORANGE'].includes(a.severity))
+  const droughtAlert   = alerts.find(a => a.alert_type === 'DROUGHT'   && ['RED','ORANGE'].includes(a.severity))
   const landslideAlert = alerts.find(a => a.alert_type === 'LANDSLIDE' && ['RED','ORANGE'].includes(a.severity))
+  const securityAlert  = alerts.find(a =>
+    ['BANDITRY','INSURGENCY','COMMUNAL_CONFLICT','CIVIL_UNREST','KIDNAPPING_HOTSPOT','TERRORISM'].includes(a.alert_type)
+    && ['RED','ORANGE'].includes(a.severity)
+  )
 
   const countBySeverity = SEVERITY_ORDER.reduce(
     (acc, s) => ({ ...acc, [s]: alerts.filter(a => a.severity === s).length }),
@@ -255,6 +259,22 @@ export default function Dashboard({ lang }: Props) {
         <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
           <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
           <p>Avoid hilly terrain and unstable slopes. Do not cross flooded roads or embankments in affected areas.</p>
+        </section>
+      )}
+
+      {/* Security advisory */}
+      {securityAlert && (
+        <section className="dashboard__advisory dashboard__advisory--security" aria-label="Security advisory" role="alert">
+          <h2 className="dashboard__section-title">
+            🔫 Security Alert — {securityAlert.alert_type.replace(/_/g, ' ')}
+          </h2>
+          <p>{securityAlert.body}</p>
+          <p className="dashboard__advisory-action">
+            <strong>Stay indoors. Avoid the affected area. Call 112 for emergencies.</strong>
+          </p>
+          <p className="dashboard__advisory-source">
+            <small>Source: {securityAlert.data_source_label} · {securityAlert.last_updated}</small>
+          </p>
         </section>
       )}
 

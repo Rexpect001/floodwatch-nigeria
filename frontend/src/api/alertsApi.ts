@@ -34,6 +34,16 @@ export interface SubscribeRequest {
   lang: SupportedLang
   lga_ids: number[]
   severity_threshold: 'RED' | 'ORANGE' | 'YELLOW' | 'GREEN'
+  security_alerts?: boolean
+}
+
+export interface ReportSubmission {
+  lat: number
+  lng: number
+  report_type: string
+  description: string
+  photo_url?: string
+  lang: SupportedLang
 }
 
 export const alertsApi = {
@@ -61,4 +71,7 @@ export const alertsApi = {
     reporter_contact?: string
   }): Promise<{ status: string; message: string }> =>
     apiClient.post('/alerts/report-error', report).then(r => r.data),
+
+  submitReport: (report: ReportSubmission): Promise<{ report_id: string; public_visible: boolean }> =>
+    apiClient.post('/reports', report).then(r => r.data),
 }

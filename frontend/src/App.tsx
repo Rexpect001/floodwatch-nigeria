@@ -27,6 +27,7 @@ const ForecastPanel     = React.lazy(() => import('./components/Forecast/Forecas
 const AlertList         = React.lazy(() => import('./components/Alerts/AlertList'))
 const SubscribeForm     = React.lazy(() => import('./components/Subscribe/SubscribeForm'))
 const SheltersPage      = React.lazy(() => import('./components/Shelters/SheltersPage'))
+const ReportForm        = React.lazy(() => import('./components/Report/ReportForm'))
 const VoicePipeline     = React.lazy(() => import('./components/VoicePipeline/VoicePipeline'))
 
 const queryClient = new QueryClient({
@@ -246,7 +247,8 @@ export default function App() {
                 <Route path="/alerts"    element={<AlertList lang={lang} />} />
                 <Route path="/shelters"  element={<SheltersPage lang={lang} />} />
                 <Route path="/subscribe" element={<SubscribeForm lang={lang} />} />
-                <Route path="/voice/*"   element={<VoiceGate />} />
+                <Route path="/report"   element={<ReportForm lang={lang} />} />
+                <Route path="/voice/*"  element={<VoiceGate />} />
                 <Route path="*"          element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>

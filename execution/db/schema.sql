@@ -213,6 +213,9 @@ CREATE TABLE alerts (
                         'DAM_RELEASE',
                         -- Health / bio (climate-linked)
                         'DISEASE_OUTBREAK',
+                        -- Security / public safety
+                        'BANDITRY', 'INSURGENCY', 'COMMUNAL_CONFLICT',
+                        'CIVIL_UNREST', 'KIDNAPPING_HOTSPOT', 'TERRORISM',
                         -- Civil / response
                         'EVACUATION', 'ALL_CLEAR'
                     )),
@@ -309,6 +312,98 @@ CREATE TABLE community_reports (
 );
 CREATE INDEX idx_reports_geom   ON community_reports USING GIST(geom);
 CREATE INDEX idx_reports_public ON community_reports(public_visible, created_at DESC);
+
+-- ============================================================
+-- SECURITY INCIDENTS (ACLED + DSS + Community)
+-- ============================================================
+
+CREATE TABLE security_incidents (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    acled_event_id  BIGINT UNIQUE,                        -- ACLED data_id (dedup key)
+    event_type      VARCHAR(32) NOT NULL CHECK (event_type IN (
+                        'BANDITRY', 'INSURGENCY', 'COMMUNAL_CONFLICT',
+                        'CIVIL_UNREST', 'KIDNAPPING_HOTSPOT', 'TERRORISM',
+                        'ARMED_CLASH', 'PROTEST', 'RIOT', 'OTHER'
+                    )),
+    -- ACLED raw fields
+    event_date      DATE NOT NULL,
+    actor1          VARCHAR(256),                         -- Perpetrator name
+    actor2          VARCHAR(256),
+    inter1          SMALLINT,                             -- ACLED interaction code
+    fatalities      INTEGER DEFAULT 0,
+    source          VARCHAR(256),                         -- e.g. "ACLED", "DSS", "COMMUNITY"
+    source_scale    VARCHAR(32),                          -- "National", "Subnational"
+    notes           TEXT,
+
+    -- Geography
+    state_id        INTEGER REFERENCES states(id),
+    lga_id          INTEGER REFERENCES lgas(id),
+    geom            GEOMETRY(POINT, 4326),
+    location_name   VARCHAR(256),
+
+    -- Alert linkage
+    alert_id        UUID REFERENCES alerts(id),           -- generated alert if severity RED/ORANGE
+    severity        VARCHAR(8) CHECK (severity IN ('RED', 'ORANGE', 'YELLOW', 'GREEN')),
+    verified        BOOLEAN DEFAULT FALSE,
+    public_visible  BOOLEAN DEFAULT TRUE,
+
+    fetched_at      TIMESTAMPTZ DEFAULT NOW(),
+    created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_security_geom     ON security_incidents USING GIST(geom);
+CREATE INDEX idx_security_lga      ON security_incidents(lga_id, event_date DESC);
+CREATE INDEX idx_security_type     ON security_incidents(event_type, severity);
+CREATE INDEX idx_security_date     ON security_incidents(event_date DESC);
+
+-- ============================================================
+-- SUBSCRIPTIONS (SMS + Push + WhatsApp)
+-- ============================================================
+
+CREATE TABLE sms_subscriptions (
+    id              BIGSERIAL PRIMARY KEY,
+    msisdn          VARCHAR(16) NOT NULL UNIQUE,          -- +234XXXXXXXXXX
+    lang            CHAR(2) NOT NULL DEFAULT 'en' CHECK (lang IN ('en', 'ha', 'yo', 'ig', 'pg')),
+    lga_ids         INTEGER[] NOT NULL,                   -- max 10 LGAs
+    severity_threshold VARCHAR(8) DEFAULT 'ORANGE' CHECK (severity_threshold IN ('RED', 'ORANGE', 'YELLOW', 'GREEN')),
+    -- Hazard category preferences (null = all)
+    alert_types     VARCHAR(32)[],                        -- null = receive all types
+    -- Security alerts opt-in (explicit consent required)
+    security_alerts BOOLEAN DEFAULT FALSE,
+    is_active       BOOLEAN DEFAULT TRUE,
+    subscribed_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_sms_sub_lgas     ON sms_subscriptions USING GIN(lga_ids);
+CREATE INDEX idx_sms_sub_active   ON sms_subscriptions(is_active, severity_threshold);
+
+CREATE TABLE push_subscriptions (
+    id              BIGSERIAL PRIMARY KEY,
+    fcm_token       TEXT NOT NULL UNIQUE,                 -- Firebase Cloud Messaging token
+    lang            CHAR(2) NOT NULL DEFAULT 'en' CHECK (lang IN ('en', 'ha', 'yo', 'ig', 'pg')),
+    lga_ids         INTEGER[] NOT NULL,
+    severity_threshold VARCHAR(8) DEFAULT 'ORANGE',
+    security_alerts BOOLEAN DEFAULT FALSE,
+    platform        VARCHAR(16) CHECK (platform IN ('web', 'android', 'ios')),
+    is_active       BOOLEAN DEFAULT TRUE,
+    last_seen       TIMESTAMPTZ DEFAULT NOW(),
+    subscribed_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_push_sub_lgas    ON push_subscriptions USING GIN(lga_ids);
+CREATE INDEX idx_push_sub_active  ON push_subscriptions(is_active);
+
+CREATE TABLE whatsapp_subscriptions (
+    id              BIGSERIAL PRIMARY KEY,
+    wa_id           VARCHAR(20) NOT NULL UNIQUE,          -- WhatsApp number (without +)
+    lang            CHAR(2) NOT NULL DEFAULT 'en' CHECK (lang IN ('en', 'ha', 'yo', 'ig', 'pg')),
+    lga_ids         INTEGER[] NOT NULL,
+    severity_threshold VARCHAR(8) DEFAULT 'ORANGE',
+    security_alerts BOOLEAN DEFAULT FALSE,
+    opted_in        BOOLEAN DEFAULT TRUE,                 -- WhatsApp requires explicit opt-in
+    opted_in_at     TIMESTAMPTZ DEFAULT NOW(),
+    is_active       BOOLEAN DEFAULT TRUE
+);
+CREATE INDEX idx_wa_sub_lgas      ON whatsapp_subscriptions USING GIN(lga_ids);
+CREATE INDEX idx_wa_sub_active    ON whatsapp_subscriptions(is_active);
 
 -- ============================================================
 -- HISTORICAL BASELINES

@@ -24,33 +24,47 @@ const SEVERITY_COLORS: Record<string, string> = {
 }
 
 const ALERT_TYPE_ICONS: Record<string, string> = {
-  FLOOD_RIVERINE:   '🌊',
-  FLOOD_FLASH:      '⚡🌊',
-  FLOOD_COASTAL:    '🌊',
-  HEATWAVE:         '🔥',
-  THUNDERSTORM:     '⛈️',
-  DUST_HARMATTAN:   '🌫️',
-  WINDSTORM:        '💨',
-  LANDSLIDE:        '⛰️',
-  EARTHQUAKE:       '📳',
-  EROSION:          '🏔️',
-  WILDFIRE:         '🔥',
-  DROUGHT:          '🏜️',
-  DAM_RELEASE:      '🚧',
-  DISEASE_OUTBREAK: '🦠',
-  EVACUATION:       '🚨',
-  ALL_CLEAR:        '✅',
+  FLOOD_RIVERINE:      '🌊',
+  FLOOD_FLASH:         '⚡🌊',
+  FLOOD_COASTAL:       '🌊',
+  HEATWAVE:            '🔥',
+  THUNDERSTORM:        '⛈️',
+  DUST_HARMATTAN:      '🌫️',
+  WINDSTORM:           '💨',
+  LANDSLIDE:           '⛰️',
+  EARTHQUAKE:          '📳',
+  EROSION:             '🏔️',
+  WILDFIRE:            '🔥',
+  DROUGHT:             '🏜️',
+  DAM_RELEASE:         '🚧',
+  DISEASE_OUTBREAK:    '🦠',
+  BANDITRY:            '🔫',
+  INSURGENCY:          '⚔️',
+  COMMUNAL_CONFLICT:   '⚡',
+  CIVIL_UNREST:        '🪧',
+  KIDNAPPING_HOTSPOT:  '🚨',
+  TERRORISM:           '💣',
+  ARMED_CLASH:         '⚔️',
+  EVACUATION:          '🚨',
+  ALL_CLEAR:           '✅',
 }
+
+// Security types — shown with a distinct style
+const SECURITY_TYPES = new Set([
+  'BANDITRY', 'INSURGENCY', 'COMMUNAL_CONFLICT',
+  'CIVIL_UNREST', 'KIDNAPPING_HOTSPOT', 'TERRORISM', 'ARMED_CLASH',
+])
 
 // Which alert_types belong to each category tab
 const HAZARD_CATEGORIES: Record<string, string[]> = {
-  all:    [],   // empty = show everything
-  flood:  ['FLOOD_RIVERINE', 'FLOOD_FLASH', 'FLOOD_COASTAL', 'DAM_RELEASE'],
-  storm:  ['THUNDERSTORM', 'WINDSTORM', 'DUST_HARMATTAN', 'HEATWAVE'],
-  land:   ['LANDSLIDE', 'EARTHQUAKE', 'EROSION'],
-  fire:   ['WILDFIRE', 'DROUGHT'],
-  health: ['DISEASE_OUTBREAK'],
-  other:  ['EVACUATION', 'ALL_CLEAR'],
+  all:      [],
+  flood:    ['FLOOD_RIVERINE', 'FLOOD_FLASH', 'FLOOD_COASTAL', 'DAM_RELEASE'],
+  storm:    ['THUNDERSTORM', 'WINDSTORM', 'DUST_HARMATTAN', 'HEATWAVE'],
+  land:     ['LANDSLIDE', 'EARTHQUAKE', 'EROSION'],
+  fire:     ['WILDFIRE', 'DROUGHT'],
+  health:   ['DISEASE_OUTBREAK'],
+  security: ['BANDITRY', 'INSURGENCY', 'COMMUNAL_CONFLICT', 'CIVIL_UNREST', 'KIDNAPPING_HOTSPOT', 'TERRORISM', 'ARMED_CLASH'],
+  other:    ['EVACUATION', 'ALL_CLEAR'],
 }
 
 function AlertCard({ alert, onReportError }: { alert: Alert; onReportError: (id: string) => void }) {
@@ -59,7 +73,7 @@ function AlertCard({ alert, onReportError }: { alert: Alert; onReportError: (id:
 
   return (
     <article
-      className={`alert-card alert-card--${alert.severity.toLowerCase()} ${alert.severity === 'RED' ? 'alert-card--pulse' : ''}`}
+      className={`alert-card alert-card--${alert.severity.toLowerCase()} ${alert.severity === 'RED' ? 'alert-card--pulse' : ''} ${SECURITY_TYPES.has(alert.alert_type) ? 'alert-card--security' : ''}`}
       aria-label={`${t(`severity.${alert.severity}`)} — ${alert.title}`}
     >
       <div className="alert-card__header">
@@ -214,15 +228,16 @@ export default function AlertList({ lang }: Props) {
             {Object.keys(HAZARD_CATEGORIES).map(cat => (
               <button
                 key={cat}
-                className={`hazard-btn ${hazardCategory === cat ? 'active' : ''}`}
+                className={`hazard-btn ${hazardCategory === cat ? 'active' : ''} ${cat === 'security' ? 'hazard-btn--security' : ''}`}
                 onClick={() => setHazardCategory(cat)}
               >
-                {cat === 'flood'  ? '🌊 ' :
-                 cat === 'storm'  ? '⛈️ ' :
-                 cat === 'land'   ? '⛰️ ' :
-                 cat === 'fire'   ? '🔥 ' :
-                 cat === 'health' ? '🦠 ' :
-                 cat === 'other'  ? '🚨 ' : ''}
+                {cat === 'flood'    ? '🌊 ' :
+                 cat === 'storm'    ? '⛈️ ' :
+                 cat === 'land'     ? '⛰️ ' :
+                 cat === 'fire'     ? '🔥 ' :
+                 cat === 'health'   ? '🦠 ' :
+                 cat === 'security' ? '🔫 ' :
+                 cat === 'other'    ? '🚨 ' : ''}
                 {t(`hazard_category.${cat}`)}
               </button>
             ))}

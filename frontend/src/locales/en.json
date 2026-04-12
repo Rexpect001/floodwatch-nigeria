@@ -60,6 +60,12 @@
     "DROUGHT": "Drought",
     "DAM_RELEASE": "Dam Release",
     "DISEASE_OUTBREAK": "Disease Outbreak",
+    "BANDITRY": "Banditry Alert",
+    "INSURGENCY": "Insurgency Alert",
+    "COMMUNAL_CONFLICT": "Communal Conflict",
+    "CIVIL_UNREST": "Civil Unrest",
+    "KIDNAPPING_HOTSPOT": "Kidnapping Hotspot",
+    "TERRORISM": "Terrorism Alert",
     "EVACUATION": "Evacuation Order",
     "ALL_CLEAR": "All Clear"
   },
@@ -70,8 +76,50 @@
     "land": "Land/Geo",
     "fire": "Fire/Drought",
     "health": "Health",
+    "security": "Security",
     "other": "Other"
   },
+  "security": {
+    "title": "Security Alert",
+    "advice_banditry": "Armed bandits reported in this area. Avoid road travel at night. Lock doors. Call 112.",
+    "advice_insurgency": "Insurgency activity reported. Stay indoors. Avoid public spaces. Follow security forces instructions.",
+    "advice_communal": "Communal conflict reported. Avoid flashpoint areas. Seek shelter. Call 112 or 08000-NEMA.",
+    "advice_unrest": "Civil unrest reported. Avoid crowds and protest areas. Stay indoors until further notice.",
+    "advice_kidnapping": "Kidnapping risk elevated. Travel in convoy. Vary your routine. Report suspicious activity to 112.",
+    "advice_terrorism": "Terrorism threat active. Avoid public gatherings. Be alert to unattended packages. Call 112 immediately.",
+    "source_acled": "Source: ACLED (Armed Conflict Location & Event Data)",
+    "opt_in_label": "Include security alerts (banditry, insurgency, unrest)",
+    "opt_in_hint": "Security alerts are sent separately and require your consent"
+  },
+  "report": {
+    "title": "Report an Incident",
+    "subtitle": "Help your community — report hazards or security incidents you observe",
+    "type_label": "Incident Type",
+    "types": {
+      "FLOOD_ACTIVE": "Flooding (active)",
+      "FLOOD_RECEDING": "Flooding (receding)",
+      "ROAD_BLOCKED": "Road blocked",
+      "SHELTER_FULL": "Shelter full",
+      "DAMAGE": "Property damage",
+      "BANDITRY": "Banditry / armed attack",
+      "CIVIL_UNREST": "Civil unrest / riot",
+      "KIDNAPPING": "Kidnapping / abduction",
+      "SUSPICIOUS_ACTIVITY": "Suspicious activity",
+      "ALL_CLEAR": "All clear / false alarm"
+    },
+    "description_label": "Describe what you observed",
+    "description_placeholder": "Be specific: location, time, what you saw, how many people affected…",
+    "photo_label": "Attach photo (optional)",
+    "location_label": "Your location",
+    "location_hint": "We use this to map your report to the nearest LGA",
+    "location_allow": "Allow location access",
+    "location_manual": "Enter location manually",
+    "submit": "Submit Report",
+    "submitting": "Submitting…",
+    "success": "Report submitted. Thank you for helping your community.",
+    "anonymous_note": "Reports are anonymous. Your phone number is never shared.",
+    "security_warning": "Security reports are forwarded to relevant authorities."
+  }
   "heatwave": {
     "title": "Heat Warning",
     "temp": "{{temp}}°C expected",

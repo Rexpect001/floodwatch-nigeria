@@ -4,7 +4,7 @@ Ingestion Scheduler — APScheduler wiring all data fetchers.
 Poll schedule:
   Every 15 min : NIHSA gauges, NiMet observations, OWM (priority LGAs)
   Every 30 min : Google Flood Hub, GloFAS ensemble
-  Every  6 h   : NIHSA AFO classifications, NiMet SCP
+  Every  6 h   : NIHSA AFO classifications, NiMet SCP, ACLED security events
   Daily 06:00  : Dam registry sync, historical baseline refresh
   On startup   : Full cold-start fetch for all sources
 
@@ -145,6 +145,20 @@ async def job_nimet_scp():
         log.error(f"[NiMet SCP] {e}", exc_info=True)
 
 
+async def job_acled_security():
+    """ACLED: armed conflict events for Nigeria (last 7 days, 6h refresh)."""
+    try:
+        from .acled_fetcher import run as acled_run
+        db    = await _get_db()
+        redis = await _get_redis()
+        count = await acled_run(db_pool=db, redis=redis)
+        log.info(f"[ACLED] {count} new security incidents ingested")
+        await _mark_success("ACLED")
+    except Exception as e:
+        log.error(f"[ACLED] {e}", exc_info=True)
+        await _mark_failure("ACLED", str(e))
+
+
 async def job_laggo_dam_check():
     """Laggo Dam (Cameroon) release check — runs every 15 min alongside gauges."""
     try:
@@ -223,6 +237,7 @@ async def cold_start():
         job_google_flood_hub(),
         job_glofas(),
         job_nihsa_afo(),
+        job_acled_security(),
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
     for i, r in enumerate(results):
@@ -255,6 +270,7 @@ async def main():
     # Every 6 hours
     scheduler.add_job(job_nihsa_afo,          IntervalTrigger(hours=6),    id="nihsa_afo",          max_instances=1)
     scheduler.add_job(job_nimet_scp,          IntervalTrigger(hours=6),    id="nimet_scp",          max_instances=1)
+    scheduler.add_job(job_acled_security,     IntervalTrigger(hours=6),    id="acled_security",     max_instances=1)
 
     # Daily 06:00 WAT
     scheduler.add_job(
