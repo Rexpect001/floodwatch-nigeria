@@ -20,13 +20,13 @@
   --border-2:    #DDE3ED;
   --border-hi:   #B0BDD0;
 
-  /* Brand / Warm Orange (ACLED-inspired) */
-  --sky:         #EA580C;
-  --sky-light:   #F97316;
-  --sky-dark:    #C2410C;
-  --sky-dim:     rgba(234,88,12,0.08);
-  --sky-glow:    rgba(234,88,12,0.20);
-  --sky-border:  rgba(234,88,12,0.30);
+  /* Brand / Navy Blue (government authority — distinct from all severity levels) */
+  --sky:         #1D4ED8;
+  --sky-light:   #2563EB;
+  --sky-dark:    #1E3A8A;
+  --sky-dim:     rgba(29,78,216,0.07);
+  --sky-glow:    rgba(29,78,216,0.18);
+  --sky-border:  rgba(29,78,216,0.28);
 
   /* Teal — for map/water/safe indicators */
   --teal:        #0D9488;
@@ -234,13 +234,11 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   height: 2px;
   background: linear-gradient(90deg,
     transparent 0%,
-    var(--red) 10%,
-    var(--orange) 30%,
+    var(--sky-dark) 15%,
     var(--sky) 50%,
-    var(--orange) 70%,
-    var(--red) 90%,
+    var(--sky-dark) 85%,
     transparent 100%);
-  opacity: 0.7;
+  opacity: 0.6;
 }
 
 .app-nav__brand {
@@ -469,17 +467,17 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 
 .btn--primary {
   background: linear-gradient(135deg, var(--sky-dark) 0%, var(--sky) 100%);
-  color: #0A0C10;
+  color: #fff;
   font-weight: 800;
   box-shadow: 0 2px 16px var(--sky-glow);
-  border-color: rgba(245,158,11,0.4);
+  border-color: var(--sky-border);
 }
 .btn--primary:hover {
   background: linear-gradient(135deg, var(--sky) 0%, var(--sky-light) 100%);
   box-shadow: 0 4px 24px var(--sky-glow);
   transform: translateY(-1px);
   text-decoration: none;
-  color: #0A0C10;
+  color: #fff;
 }
 .btn--primary:active { transform: scale(0.97); box-shadow: none; }
 
@@ -689,7 +687,7 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, var(--teal), var(--sky), var(--sky-light));
+  background: linear-gradient(90deg, var(--teal), var(--teal-border));
   border-radius: var(--r-xl) var(--r-xl) 0 0;
 }
 .weather-widget--heatwave::before {
@@ -759,6 +757,78 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   margin-top: 8px;
   font-style: italic;
 }
+
+/* ── Quick Actions ────────────────────────────────────────────── */
+.quick-actions {
+  margin: 12px 14px 0;
+}
+
+.quick-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 8px;
+  border-radius: var(--r-lg);
+  border: 1.5px solid;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s var(--ease), box-shadow 0.12s var(--ease);
+  min-height: 72px;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+  line-height: 1.2;
+}
+.quick-action:hover { transform: translateY(-2px); text-decoration: none; }
+.quick-action:active { transform: scale(0.96); }
+
+.quick-action__icon { font-size: 1.4rem; line-height: 1; }
+.quick-action__label { color: inherit; }
+
+/* Variant: Emergency (RED) */
+.quick-action--emergency {
+  background: var(--red-dim);
+  border-color: var(--red-border);
+  color: var(--red);
+  box-shadow: 0 2px 8px rgba(220,38,38,0.10);
+}
+.quick-action--emergency:hover { box-shadow: 0 4px 14px rgba(220,38,38,0.18); }
+
+/* Variant: Warning (ORANGE) */
+.quick-action--warning {
+  background: var(--orange-dim);
+  border-color: var(--orange-border);
+  color: var(--orange);
+  box-shadow: 0 2px 8px rgba(234,88,12,0.10);
+}
+.quick-action--warning:hover { box-shadow: 0 4px 14px rgba(234,88,12,0.18); }
+
+/* Variant: Watch (YELLOW) */
+.quick-action--watch {
+  background: var(--yellow-dim);
+  border-color: var(--yellow-border);
+  color: var(--yellow);
+  box-shadow: 0 2px 8px rgba(202,138,4,0.10);
+}
+.quick-action--watch:hover { box-shadow: 0 4px 14px rgba(202,138,4,0.18); }
+
+/* Variant: Advisory (GREEN) */
+.quick-action--advisory {
+  background: var(--green-dim);
+  border-color: var(--green-border);
+  color: var(--green);
+  box-shadow: 0 2px 8px rgba(22,163,74,0.10);
+}
+.quick-action--advisory:hover { box-shadow: 0 4px 14px rgba(22,163,74,0.18); }
 
 /* Active alert banner */
 .alert-banner {
@@ -1602,6 +1672,11 @@ select, input, textarea { font-family: inherit; color: var(--text); }
   color: #fff;
   flex-shrink: 0;
 }
+/* Severity-driven badge colors — no inline styles needed */
+.alert-card__badge--red    { background: var(--red);    }
+.alert-card__badge--orange { background: var(--orange); }
+.alert-card__badge--yellow { background: var(--yellow); color: #fff; }
+.alert-card__badge--green  { background: var(--green);  }
 .alert-card__type {
   font-size: 0.72rem;
   font-weight: 700;

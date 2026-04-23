@@ -178,6 +178,37 @@ function WeatherWidget({ lang }: { lang: SupportedLang }) {
   )
 }
 
+// ── Quick Actions ─────────────────────────────────────────────────
+function QuickActions() {
+  const actions = [
+    { icon: '📞', label: 'Call NEMA',        href: 'tel:08000636261',  variant: 'emergency' },
+    { icon: '🏥', label: 'Find Shelter',     to:   '/shelters',        variant: 'warning'   },
+    { icon: '🗺️', label: 'Evacuation Map',   to:   '/map',             variant: 'watch'     },
+    { icon: '🔔', label: 'Subscribe',         to:   '/subscribe',       variant: 'advisory'  },
+    { icon: '📝', label: 'Report Hazard',    to:   '/report',          variant: 'advisory'  },
+    { icon: '📢', label: 'Listen',           to:   '/voice',           variant: 'advisory'  },
+  ]
+  return (
+    <section className="quick-actions" aria-label="Quick actions">
+      <h2 className="dashboard__section-title">Quick Actions</h2>
+      <div className="quick-actions__grid">
+        {actions.map(a => {
+          const cls = `quick-action quick-action--${a.variant}`
+          return a.href
+            ? <a key={a.label} href={a.href} className={cls} aria-label={a.label}>
+                <span className="quick-action__icon" aria-hidden>{a.icon}</span>
+                <span className="quick-action__label">{a.label}</span>
+              </a>
+            : <Link key={a.label} to={a.to!} className={cls} aria-label={a.label}>
+                <span className="quick-action__icon" aria-hidden>{a.icon}</span>
+                <span className="quick-action__label">{a.label}</span>
+              </Link>
+        })}
+      </div>
+    </section>
+  )
+}
+
 function AlertBanner({ alert }: { alert: Alert }) {
   const { t } = useTranslation()
   return (
@@ -263,6 +294,9 @@ export default function Dashboard({ lang }: Props) {
 
           {/* Weather widget */}
           <WeatherWidget lang={lang} />
+
+          {/* Quick actions */}
+          <QuickActions />
 
           {/* Critical alert banner */}
           {topAlert && <AlertBanner alert={topAlert} />}

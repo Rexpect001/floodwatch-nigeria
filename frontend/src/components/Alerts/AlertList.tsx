@@ -19,10 +19,6 @@ import type { SupportedLang } from '../../i18n'
 
 interface Props { lang: SupportedLang }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  RED: '#D32F2F', ORANGE: '#F57C00', YELLOW: '#F9A825', GREEN: '#388E3C',
-}
-
 const ALERT_TYPE_ICONS: Record<string, string> = {
   FLOOD_RIVERINE:      '🌊',
   FLOOD_FLASH:         '⚡🌊',
@@ -78,8 +74,7 @@ function AlertCard({ alert, onReportError }: { alert: Alert; onReportError: (id:
     >
       <div className="alert-card__header">
         <span
-          className="alert-card__badge"
-          style={{ background: SEVERITY_COLORS[alert.severity] }}
+          className={`alert-card__badge alert-card__badge--${alert.severity.toLowerCase()}`}
           aria-label={t(`severity.${alert.severity}`)}
         >
           {t(`severity.${alert.severity}`)}
