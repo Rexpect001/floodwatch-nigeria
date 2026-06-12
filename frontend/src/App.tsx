@@ -20,8 +20,13 @@ import './index.css'
 import { useTranslation } from 'react-i18next'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import './i18n'
+import {
+  LayoutDashboard, Map, Bell, Home, Building2, BarChart2,
+  Menu, X, Globe, AlertTriangle, ChevronRight,
+} from 'lucide-react'
 
 import { SUPPORTED_LANGUAGES, type SupportedLang } from './i18n'
+import type { Alert } from './api/alertsApi'
 
 // ── Geolocation context ──────────────────────────────────────────
 export interface UserLocation {
@@ -67,7 +72,6 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
 }
 
 // ── Nigeria bounding box — clamp location to within Nigeria ──────
-// Lat 4.27–13.89, Lng 2.67–14.68
 function isInNigeria(lat: number, lng: number): boolean {
   return lat >= 4.0 && lat <= 14.2 && lng >= 2.5 && lng <= 15.0
 }
@@ -102,12 +106,10 @@ function useGeolocation(): GeoCtx {
       navigator.geolocation.getCurrentPosition(
         async pos => {
           const { latitude: lat, longitude: lng, accuracy } = pos.coords
-          // Only use GPS coords if they are inside Nigeria
           if (isInNigeria(lat, lng)) {
             const placeName = await reverseGeocode(lat, lng)
             setLocation({ lat, lng, accuracy, placeName, source: 'gps' })
           } else {
-            // User is outside Nigeria (e.g. developer abroad) — default to Nigeria
             setLocation(NIGERIA_CENTER)
           }
         },
@@ -126,7 +128,6 @@ function useGeolocation(): GeoCtx {
             source: 'ip',
           })
         } else {
-          // IP is outside Nigeria — use Nigeria centroid
           setLocation(NIGERIA_CENTER)
         }
       } catch {
@@ -144,8 +145,8 @@ function useGeolocation(): GeoCtx {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:   5 * 60 * 1000,   // 5 min
-      gcTime:      72 * 60 * 60 * 1000,  // 72h (matches SW cache)
+      staleTime:   5 * 60 * 1000,
+      gcTime:      72 * 60 * 60 * 1000,
       retry: 2,
       refetchOnWindowFocus: false,
     },
@@ -159,18 +160,22 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
   const [menuOpen, setMenuOpen] = useState(false)
 
   const navItems = [
-    { to: '/',          label: t('nav.dashboard') },
-    { to: '/map',       label: t('nav.map')       },
-    { to: '/forecast',  label: t('nav.forecast')  },
-    { to: '/alerts',    label: t('nav.alerts')    },
-    { to: '/subscribe', label: t('nav.subscribe') },
+    { to: '/',          label: t('nav.dashboard'), icon: LayoutDashboard },
+    { to: '/map',       label: t('nav.map'),       icon: Map             },
+    { to: '/forecast',  label: t('nav.forecast'),  icon: BarChart2       },
+    { to: '/alerts',    label: t('nav.alerts'),    icon: Bell            },
+    { to: '/subscribe', label: t('nav.subscribe'), icon: Bell            },
   ]
 
   return (
     <nav className="app-nav" aria-label="Main navigation">
+      {/* Brand */}
       <div className="app-nav__brand">
-        <span className="app-nav__logo" aria-hidden>🛡️</span>
+        <div className="app-nav__logo-mark" aria-hidden>
+          <AlertTriangle size={16} strokeWidth={2.5} />
+        </div>
         <span className="app-nav__title">{t('app.name')}</span>
+        <span className="app-nav__subtitle">Nigeria</span>
       </div>
 
       {/* Mobile hamburger */}
@@ -181,7 +186,7 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
         aria-label="Toggle navigation"
         onClick={() => setMenuOpen(o => !o)}
       >
-        <span /><span /><span />
+        {menuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
       <ul id="nav-menu" className={`app-nav__links ${menuOpen ? 'open' : ''}`} role="list">
@@ -200,16 +205,19 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
       </ul>
 
       {/* Language switcher */}
-      <select
-        className="app-nav__lang"
-        value={lang}
-        onChange={e => onLangChange(e.target.value as SupportedLang)}
-        aria-label="Select language"
-      >
-        {SUPPORTED_LANGUAGES.map(l => (
-          <option key={l.code} value={l.code}>{l.nativeLabel}</option>
-        ))}
-      </select>
+      <div className="app-nav__lang-wrap" aria-label="Language">
+        <Globe size={13} className="app-nav__lang-icon" aria-hidden />
+        <select
+          className="app-nav__lang"
+          value={lang}
+          onChange={e => onLangChange(e.target.value as SupportedLang)}
+          aria-label="Select language"
+        >
+          {SUPPORTED_LANGUAGES.map(l => (
+            <option key={l.code} value={l.code}>{l.nativeLabel}</option>
+          ))}
+        </select>
+      </div>
     </nav>
   )
 }
@@ -217,43 +225,47 @@ function AppNav({ lang, onLangChange }: { lang: SupportedLang; onLangChange: (l:
 // ── Bottom Tab Bar ───────────────────────────────────────────
 
 function BottomTabBar() {
-  const { data: alerts = [] } = useQuery({
+  const { data: alerts = [] } = useQuery<Alert[]>({
     queryKey: ['alerts-badge'],
     queryFn: () => import('./api/alertsApi').then(m => m.alertsApi.list()),
     refetchInterval: 60_000,
     staleTime: 30_000,
   })
-  const redCount = alerts.filter((a: any) => a.severity === 'RED').length
-  const criticalCount = alerts.filter((a: any) => ['RED','ORANGE'].includes(a.severity)).length
+  const redCount      = alerts.filter(a => a.severity === 'RED').length
+  const criticalCount = alerts.filter(a => ['RED', 'ORANGE'].includes(a.severity)).length
 
   const tabs = [
-    { to: '/',          icon: '🏠', label: 'Home'     },
-    { to: '/map',       icon: '🗺️', label: 'Map'      },
-    { to: '/alerts',    icon: '🚨', label: 'Alerts',  badge: criticalCount },
-    { to: '/shelters',  icon: '🏥', label: 'Shelters' },
-    { to: '/forecast',  icon: '📊', label: 'Forecast' },
+    { to: '/',         icon: Home,      label: 'Home'     },
+    { to: '/map',      icon: Map,       label: 'Map'      },
+    { to: '/alerts',   icon: Bell,      label: 'Alerts',  badge: criticalCount },
+    { to: '/shelters', icon: Building2, label: 'Shelters' },
+    { to: '/forecast', icon: BarChart2, label: 'Forecast' },
   ]
+
   return (
     <>
-      {tabs.map(tab => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={tab.to === '/'}
-          className={({ isActive }) => `footer-tab ${isActive ? 'active' : ''}`}
-          aria-label={tab.label}
-        >
-          <span className="footer-tab__icon-wrap" aria-hidden>
-            <span className="footer-tab__icon">{tab.icon}</span>
-            {tab.badge != null && tab.badge > 0 && (
-              <span className={`footer-tab__badge ${redCount > 0 ? 'footer-tab__badge--red' : ''}`}>
-                {tab.badge > 99 ? '99+' : tab.badge}
-              </span>
-            )}
-          </span>
-          <span>{tab.label}</span>
-        </NavLink>
-      ))}
+      {tabs.map(tab => {
+        const Icon = tab.icon
+        return (
+          <NavLink
+            key={tab.to}
+            to={tab.to}
+            end={tab.to === '/'}
+            className={({ isActive }) => `footer-tab ${isActive ? 'active' : ''}`}
+            aria-label={tab.label}
+          >
+            <span className="footer-tab__icon-wrap" aria-hidden>
+              <Icon size={20} strokeWidth={1.75} />
+              {tab.badge != null && tab.badge > 0 && (
+                <span className={`footer-tab__badge ${redCount > 0 ? 'footer-tab__badge--red' : ''}`}>
+                  {tab.badge > 99 ? '99+' : tab.badge}
+                </span>
+              )}
+            </span>
+            <span>{tab.label}</span>
+          </NavLink>
+        )
+      })}
     </>
   )
 }
@@ -279,31 +291,46 @@ function VoiceGate() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 400, margin: '0 auto' }}>
-      <h2 style={{ marginBottom: 16 }}>🔐 NEMA Officer Access</h2>
-      <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', marginBottom: 20 }}>
-        Voice alert production is restricted to authorised NEMA officers.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <input
-          className="form-input"
-          placeholder="Alert ID"
-          value={alertId}
-          onChange={e => setAlertId(e.target.value)}
-        />
-        <input
-          className="form-input"
-          placeholder="Officer ID"
-          value={officerId}
-          onChange={e => setOfficerId(e.target.value)}
-        />
-        <button
-          className="btn btn--primary"
-          disabled={!alertId || !officerId}
-          onClick={() => setActive(true)}
-        >
-          Enter Pipeline
-        </button>
+    <div className="voice-gate">
+      <div className="voice-gate__card">
+        <div className="voice-gate__header">
+          <div className="voice-gate__icon-wrap" aria-hidden>
+            <AlertTriangle size={22} strokeWidth={2} />
+          </div>
+          <div>
+            <h2 className="voice-gate__title">NEMA Officer Access</h2>
+            <p className="voice-gate__subtitle">Voice alert production — authorised personnel only</p>
+          </div>
+        </div>
+        <div className="voice-gate__fields">
+          <div className="form-group">
+            <label className="form-label" htmlFor="alert-id">Alert ID</label>
+            <input
+              id="alert-id"
+              className="form-input"
+              placeholder="e.g. ALT-2024-001234"
+              value={alertId}
+              onChange={e => setAlertId(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="officer-id">Officer ID</label>
+            <input
+              id="officer-id"
+              className="form-input"
+              placeholder="e.g. NEMA-OFF-5678"
+              value={officerId}
+              onChange={e => setOfficerId(e.target.value)}
+            />
+          </div>
+          <button
+            className="btn btn--primary btn--full"
+            disabled={!alertId || !officerId}
+            onClick={() => setActive(true)}
+          >
+            Enter Pipeline <ChevronRight size={16} aria-hidden />
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -334,14 +361,13 @@ export default function App() {
     i18n.changeLanguage(newLang)
     localStorage.setItem('hazardwatch_lang', newLang)
     document.documentElement.lang = newLang
-    // RTL for Hausa (Arabic script)
-    document.documentElement.dir = newLang === 'ha' ? 'rtl' : 'ltr'
   }
 
-  // Apply RTL on initial load
+  // All supported languages (en, ha, ig, yo, pidgin) use Latin script — LTR.
   useEffect(() => {
-    document.documentElement.dir = lang === 'ha' ? 'rtl' : 'ltr'
     document.documentElement.lang = lang
+    document.documentElement.dir = 'ltr'
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (

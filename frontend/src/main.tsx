@@ -1,6 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import '@fontsource-variable/public-sans'
 import App from './App'
+import ErrorBoundary from './components/ErrorBoundary'
 import './i18n'
 
 // Register service worker (PWA)
@@ -14,6 +16,8 @@ if ('serviceWorker' in navigator) {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 )

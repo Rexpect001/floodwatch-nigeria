@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1565C0" />
-  <title>FloodWatch Nigeria — Offline</title>
+  <meta name="theme-color" content="#163E6F" />
+  <title>HazardWatch Nigeria — Offline</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: #f5f7fa;
-      color: #1a1a2e;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #F6F7F9;
+      color: #1A2332;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -21,17 +21,18 @@
     }
     .card {
       background: #fff;
-      border-radius: 12px;
+      border: 1px solid #D9DEE5;
+      border-radius: 10px;
       padding: 40px 32px;
       max-width: 420px;
       width: 100%;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 16px rgba(16,24,40,0.08);
     }
-    .icon { font-size: 64px; margin-bottom: 16px; }
-    h1 { font-size: 1.5rem; color: #1565C0; margin-bottom: 8px; }
-    p  { font-size: 1rem; color: #555; line-height: 1.6; margin-bottom: 16px; }
+    .icon { font-size: 56px; margin-bottom: 16px; }
+    h1 { font-size: 1.375rem; color: #163E6F; margin-bottom: 8px; }
+    p  { font-size: 0.95rem; color: #3D4757; line-height: 1.6; margin-bottom: 16px; }
     .emergency {
-      background: #D32F2F;
+      background: #B91C1C;
       color: #fff;
       border-radius: 8px;
       padding: 16px;
@@ -40,12 +41,12 @@
     }
     .emergency a { color: #fff; }
     .ussd {
-      background: #1565C0;
+      background: #205493;
       color: #fff;
       border-radius: 8px;
       padding: 16px;
       margin: 16px 0;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       letter-spacing: 0.5px;
     }
@@ -53,25 +54,25 @@
       display: inline-block;
       margin-top: 24px;
       padding: 12px 32px;
-      background: #1565C0;
+      background: #205493;
       color: #fff;
-      border: none;
+      border: 1px solid #163E6F;
       border-radius: 8px;
       font-size: 1rem;
       cursor: pointer;
       text-decoration: none;
     }
-    .langs { margin-top: 24px; font-size: 0.85rem; color: #888; }
+    .langs { margin-top: 24px; font-size: 0.85rem; color: #8A94A3; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="icon" aria-hidden="true">📡</div>
     <h1>You are offline</h1>
-    <p>FloodWatch Nigeria cannot reach the network. Cached flood maps are still available in the app.</p>
+    <p>HazardWatch Nigeria cannot reach the network. Cached hazard maps are still available in the app.</p>
 
     <div class="emergency" role="alert">
-      🚨 Emergency: Call <a href="tel:08000636261">0800-NEMA (08000-636261)</a>
+      Emergency: Call <a href="tel:08000636261">0800-NEMA (08000-636261)</a>
     </div>
 
     <div class="ussd" aria-label="USSD code for feature phones">
@@ -89,7 +90,7 @@
       Try Again
     </a>
 
-    <p class="langs">NEMA · NIHSA · NiMet · FloodWatch Nigeria</p>
+    <p class="langs">NEMA · NIHSA · NiMet · HazardWatch Nigeria</p>
   </div>
 </body>
 </html>

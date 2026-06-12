@@ -19,13 +19,6 @@ export default defineConfig({
     }),
   ],
 
-  // Expose env vars to the client bundle
-  define: {
-    __API_BASE__: JSON.stringify(
-      process.env.VITE_API_BASE_URL || '/api/v1'
-    ),
-  },
-
   server: {
     port: 3000,
     proxy: {

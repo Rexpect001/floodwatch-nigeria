@@ -1,5 +1,5 @@
 /**
- * FloodWatch NG — PWA Service Worker
+ * HazardWatch Nigeria — PWA Service Worker
  *
  * Strategy:
  *   - App shell (HTML/JS/CSS): Cache First (always fast)
@@ -12,10 +12,10 @@
  * Offline banner: served from cache with staleness timestamp.
  */
 
-const CACHE_VERSION     = 'v2';
-const SHELL_CACHE       = `floodwatch-shell-${CACHE_VERSION}`;
-const DATA_CACHE        = `floodwatch-data-${CACHE_VERSION}`;
-const MAP_CACHE         = `floodwatch-maps-${CACHE_VERSION}`;
+const CACHE_VERSION     = 'v3';
+const SHELL_CACHE       = `hazardwatch-shell-${CACHE_VERSION}`;
+const DATA_CACHE        = `hazardwatch-data-${CACHE_VERSION}`;
+const MAP_CACHE         = `hazardwatch-maps-${CACHE_VERSION}`;
 const DATA_TTL_MS       = 72 * 60 * 60 * 1000;   // 72 hours
 
 // App shell — cached at install, never stale
@@ -272,7 +272,7 @@ self.addEventListener('push', event => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'FloodWatch Nigeria', options)
+    self.registration.showNotification(data.title || 'HazardWatch Nigeria', options)
   );
 });
 

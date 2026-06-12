@@ -1,21 +1,17 @@
 /**
- * Dashboard v4 — Map-first, location-aware landing page
- *
- * Layout:
- *   1. Location banner — "You are here: Lagos, Lagos State" (auto-detected)
- *   2. Map hero — FloodRiskMap centred on user, 280px, tap-to-expand
- *   3. Weather widget for detected location
- *   4. Active alert banner (RED/ORANGE)
- *   5. Severity summary cards
- *   6. Advisory sections (heatwave / drought / landslide / security)
- *   7. Quick navigation
- *   8. Seasonal outlook callout
- *   9. USSD hint
+ * Dashboard — Map-first, location-aware landing page
  */
 import React, { useContext, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import {
+  MapPin, Thermometer, Wind, Droplets, CloudRain,
+  Phone, Building2, Map, Bell, FileText, Volume2,
+  Waves, Flame, CloudSun, Mountain,
+  ArrowUpRight, AlertCircle, CheckCircle, Loader2,
+  TrendingUp,
+} from 'lucide-react'
 import { alertsApi, type Alert } from '../../api/alertsApi'
 import { forecastsApi, type CurrentWeather } from '../../api/forecastsApi'
 import type { SupportedLang } from '../../i18n'
@@ -34,7 +30,7 @@ function LocationBanner() {
   if (status === 'loading') {
     return (
       <div className="location-banner location-banner__loading" aria-live="polite">
-        <div className="spinner" style={{ width: 12, height: 12 }} aria-hidden />
+        <Loader2 size={14} className="location-banner__spin" aria-hidden />
         <span>Detecting your location…</span>
       </div>
     )
@@ -43,7 +39,8 @@ function LocationBanner() {
   if (!location) {
     return (
       <div className="location-banner location-banner__error" aria-live="polite">
-        📍 Location unavailable — showing Nigeria overview
+        <MapPin size={14} aria-hidden />
+        Location unavailable — showing Nigeria overview
       </div>
     )
   }
@@ -52,11 +49,11 @@ function LocationBanner() {
     <div className="location-banner" aria-live="polite" aria-label={`Your location: ${location.placeName}`}>
       <div className="location-banner__dot" aria-hidden />
       <div className="location-banner__text">
-        <span className="location-banner__here">You are here</span>
+        <span className="location-banner__here">Current location</span>
         <span className="location-banner__place">{location.placeName}</span>
       </div>
       {location.source === 'fallback' && (
-        <span style={{ fontSize: '0.65rem', opacity: 0.6, marginLeft: 'auto' }}>
+        <span className="location-banner__hint">
           Enable location for local alerts
         </span>
       )}
@@ -69,13 +66,18 @@ function MapHero({ lang }: { lang: SupportedLang }) {
   return (
     <div className="dashboard-hero">
       <div className="dashboard-hero__overlay">
-        <span className="dashboard-hero__label">🗺 Live Hazard Map</span>
-        <Link to="/map" className="dashboard-hero__expand">Expand ↗</Link>
+        <span className="dashboard-hero__label">
+          <Map size={11} aria-hidden />
+          Live Hazard Map
+        </span>
+        <Link to="/map" className="dashboard-hero__expand">
+          Expand <ArrowUpRight size={12} aria-hidden />
+        </Link>
       </div>
       <div className="dashboard-hero__map">
         <Suspense fallback={
           <div style={{ height: '100%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="spinner" style={{ width: 24, height: 24 }} aria-hidden />
+            <Loader2 size={24} className="location-banner__spin" style={{ color: 'var(--text-3)' }} aria-hidden />
           </div>
         }>
           <FloodRiskMap lang={lang} heroMode />
@@ -131,7 +133,7 @@ function LiveStatusBar({ alerts, isLoading }: { alerts: Alert[]; isLoading: bool
 
 // ── Weather Widget ────────────────────────────────────────────────
 function WeatherWidget({ lang }: { lang: SupportedLang }) {
-  const LGA_ABUJA = 1  // TODO: resolve detected LGA from coordinates
+  const LGA_ABUJA = 1
   const { data: weather, isLoading } = useQuery<CurrentWeather>({
     queryKey: ['weather', lang],
     queryFn: () => forecastsApi.getWeather(LGA_ABUJA, lang),
@@ -141,7 +143,7 @@ function WeatherWidget({ lang }: { lang: SupportedLang }) {
 
   if (isLoading) return (
     <div className="weather-widget weather-widget--loading" aria-label="Loading weather">
-      <div className="spinner" aria-hidden style={{ width: 20, height: 20 }} />
+      <Loader2 size={20} className="location-banner__spin" style={{ color: 'var(--text-3)' }} aria-hidden />
     </div>
   )
 
@@ -151,26 +153,35 @@ function WeatherWidget({ lang }: { lang: SupportedLang }) {
     <div className={`weather-widget ${weather.is_heatwave ? 'weather-widget--heatwave' : ''}`}
          role="region" aria-label="Current weather">
       <div className="weather-widget__location">
-        📍 {weather.lga_name}, {weather.state_name}
+        <MapPin size={11} aria-hidden />
+        {weather.lga_name}, {weather.state_name}
       </div>
       <div className="weather-widget__main">
         <span className="weather-widget__temp">
           {weather.temp_c != null ? `${Math.round(weather.temp_c)}°C` : '--'}
         </span>
         {weather.is_heatwave && (
-          <span className="weather-widget__heatwave-badge">🔥 HEATWAVE</span>
+          <span className="weather-widget__heatwave-badge">
+            <Flame size={11} aria-hidden /> HEATWAVE
+          </span>
         )}
         <span className="weather-widget__condition">{weather.condition ?? 'N/A'}</span>
       </div>
       <div className="weather-widget__stats">
         {weather.rainfall_mm != null && (
-          <span className="weather-widget__stat">🌧 {weather.rainfall_mm.toFixed(1)}mm</span>
+          <span className="weather-widget__stat">
+            <CloudRain size={13} aria-hidden /> {weather.rainfall_mm.toFixed(1)} mm
+          </span>
         )}
         {weather.humidity_pct != null && (
-          <span className="weather-widget__stat">💧 {weather.humidity_pct}%</span>
+          <span className="weather-widget__stat">
+            <Droplets size={13} aria-hidden /> {weather.humidity_pct}%
+          </span>
         )}
         {weather.wind_kmh != null && (
-          <span className="weather-widget__stat">💨 {Math.round(weather.wind_kmh)}km/h</span>
+          <span className="weather-widget__stat">
+            <Wind size={13} aria-hidden /> {Math.round(weather.wind_kmh)} km/h
+          </span>
         )}
       </div>
       <div className="weather-widget__source">{weather.data_source_label}</div>
@@ -181,26 +192,27 @@ function WeatherWidget({ lang }: { lang: SupportedLang }) {
 // ── Quick Actions ─────────────────────────────────────────────────
 function QuickActions() {
   const actions = [
-    { icon: '📞', label: 'Call NEMA',        href: 'tel:08000636261',  variant: 'emergency' },
-    { icon: '🏥', label: 'Find Shelter',     to:   '/shelters',        variant: 'warning'   },
-    { icon: '🗺️', label: 'Evacuation Map',   to:   '/map',             variant: 'watch'     },
-    { icon: '🔔', label: 'Subscribe',         to:   '/subscribe',       variant: 'advisory'  },
-    { icon: '📝', label: 'Report Hazard',    to:   '/report',          variant: 'advisory'  },
-    { icon: '📢', label: 'Listen',           to:   '/voice',           variant: 'advisory'  },
+    { icon: Phone,     label: 'Call NEMA',     href: 'tel:08000636261', variant: 'emergency' },
+    { icon: Building2, label: 'Find Shelter',  to:   '/shelters',       variant: 'warning'   },
+    { icon: Map,       label: 'Evacuation Map',to:   '/map',            variant: 'watch'     },
+    { icon: Bell,      label: 'Subscribe',     to:   '/subscribe',      variant: 'advisory'  },
+    { icon: FileText,  label: 'Report Hazard', to:   '/report',         variant: 'advisory'  },
+    { icon: Volume2,   label: 'Listen',        to:   '/voice',          variant: 'advisory'  },
   ]
   return (
     <section className="quick-actions" aria-label="Quick actions">
       <h2 className="dashboard__section-title">Quick Actions</h2>
       <div className="quick-actions__grid">
         {actions.map(a => {
+          const Icon = a.icon
           const cls = `quick-action quick-action--${a.variant}`
           return a.href
             ? <a key={a.label} href={a.href} className={cls} aria-label={a.label}>
-                <span className="quick-action__icon" aria-hidden>{a.icon}</span>
+                <Icon size={22} strokeWidth={1.75} className="quick-action__icon" aria-hidden />
                 <span className="quick-action__label">{a.label}</span>
               </a>
             : <Link key={a.label} to={a.to!} className={cls} aria-label={a.label}>
-                <span className="quick-action__icon" aria-hidden>{a.icon}</span>
+                <Icon size={22} strokeWidth={1.75} className="quick-action__icon" aria-hidden />
                 <span className="quick-action__label">{a.label}</span>
               </Link>
         })}
@@ -303,16 +315,17 @@ export default function Dashboard({ lang }: Props) {
 
           {!topAlert && !isLoading && (
             <div className="dashboard__all-clear" role="status">
-              <span aria-hidden>✅</span> {t('alerts.none')}
+              <CheckCircle size={18} aria-hidden /> {t('alerts.none')}
             </div>
           )}
           {isLoading && (
             <div className="dashboard__loading" role="status" aria-live="polite">
-              <div className="spinner" aria-hidden /> {t('alerts.active')}…
+              <Loader2 size={16} className="location-banner__spin" aria-hidden /> {t('alerts.active')}…
             </div>
           )}
           {isError && (
             <div className="dashboard__error" role="alert">
+              <AlertCircle size={15} style={{ display: 'inline', marginRight: 6 }} aria-hidden />
               Unable to load alerts. Showing cached data.
             </div>
           )}
@@ -332,27 +345,33 @@ export default function Dashboard({ lang }: Props) {
           {/* Advisories */}
           {heatAlert && (
             <section className="dashboard__heatwave dashboard__advisory" aria-label="Heat advisory" role="note">
-              <h2 className="dashboard__section-title">🔥 {t('heatwave.title')}</h2>
+              <h2 className="dashboard__section-title dashboard__section-title--icon">
+                <Flame size={14} aria-hidden /> {t('heatwave.title')}
+              </h2>
               <p className="heatwave__advice">{t('heatwave.advice')}</p>
               <p className="heatwave__threshold"><small>{t('heatwave.threshold')}</small></p>
             </section>
           )}
           {droughtAlert && (
             <section className="dashboard__advisory" aria-label="Drought advisory" role="note">
-              <h2 className="dashboard__section-title">🏜️ Drought Warning</h2>
+              <h2 className="dashboard__section-title dashboard__section-title--icon">
+                <CloudSun size={14} aria-hidden /> Drought Warning
+              </h2>
               <p>Water scarcity conditions active. Conserve water. Check on vulnerable communities in affected LGAs.</p>
             </section>
           )}
           {landslideAlert && (
             <section className="dashboard__advisory" aria-label="Landslide advisory" role="note">
-              <h2 className="dashboard__section-title">⛰️ Landslide Warning</h2>
+              <h2 className="dashboard__section-title dashboard__section-title--icon">
+                <Mountain size={14} aria-hidden /> Landslide Warning
+              </h2>
               <p>Avoid hilly terrain and unstable slopes. Do not cross flooded roads or embankments in affected areas.</p>
             </section>
           )}
           {securityAlert && (
             <section className="dashboard__advisory dashboard__advisory--security" aria-label="Security advisory" role="alert">
-              <h2 className="dashboard__section-title">
-                🔫 Security Alert — {securityAlert.alert_type.replace(/_/g, ' ')}
+              <h2 className="dashboard__section-title dashboard__section-title--icon">
+                <AlertCircle size={14} aria-hidden /> Security Alert — {securityAlert.alert_type.replace(/_/g, ' ')}
               </h2>
               <p>{securityAlert.body}</p>
               <p className="dashboard__advisory-action">
@@ -366,22 +385,24 @@ export default function Dashboard({ lang }: Props) {
 
           {/* Seasonal outlook */}
           <section className="dashboard__afo-callout">
-            <h2 className="dashboard__section-title">📋 Seasonal Hazard Outlook</h2>
+            <h2 className="dashboard__section-title dashboard__section-title--icon">
+              <TrendingUp size={14} aria-hidden /> Seasonal Hazard Outlook
+            </h2>
             <div className="dashboard__outlook-grid">
               <div className="dashboard__outlook-item">
-                <span>🌊</span>
+                <Waves size={16} className="dashboard__outlook-icon" aria-hidden />
                 <span><strong>{t('forecast.afo_window')}</strong> · <Link to="/forecast">{t('forecast.afo_title')}</Link></span>
               </div>
               <div className="dashboard__outlook-item">
-                <span>🔥</span>
+                <Flame size={16} className="dashboard__outlook-icon" aria-hidden />
                 <span>Heatwave: <strong>Sokoto, Borno, Yobe</strong> (Apr–Jun)</span>
               </div>
               <div className="dashboard__outlook-item">
-                <span>🏜️</span>
+                <CloudSun size={16} className="dashboard__outlook-icon" aria-hidden />
                 <span>Drought: <strong>Northeast / Sahel belt</strong></span>
               </div>
               <div className="dashboard__outlook-item">
-                <span>⛰️</span>
+                <Mountain size={16} className="dashboard__outlook-icon" aria-hidden />
                 <span>Landslide: <strong>Anambra, Enugu, Cross River</strong></span>
               </div>
             </div>

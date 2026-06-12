@@ -1,35 +1,29 @@
 {
-  "name": "FloodWatch Nigeria",
-  "short_name": "FloodWatch",
-  "description": "Official Nigeria Flood & Climate Early Warning System",
+  "name": "HazardWatch Nigeria",
+  "short_name": "HazardWatch",
+  "description": "Official Nigeria Multi-Hazard Early Warning System — NEMA/NIHSA/NiMet",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A1628",
-  "theme_color": "#0A1628",
+  "background_color": "#F6F7F9",
+  "theme_color": "#163E6F",
   "orientation": "portrait-primary",
   "lang": "en-NG",
   "icons": [
     { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable any" }
-  ],
-  "screenshots": [
-    { "src": "/screenshots/dashboard.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/screenshots/map.png",       "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
   ],
   "categories": ["weather", "utilities", "government"],
   "shortcuts": [
     {
       "name": "Active Alerts",
       "short_name": "Alerts",
-      "description": "View current flood and weather alerts",
-      "url": "/alerts",
-      "icons": [{ "src": "/icons/shortcut-alerts.png", "sizes": "96x96" }]
+      "description": "View current hazard and weather alerts",
+      "url": "/alerts"
     },
     {
       "name": "Find Shelter",
       "short_name": "Shelter",
       "description": "Locate nearest evacuation shelter",
-      "url": "/shelters",
-      "icons": [{ "src": "/icons/shortcut-shelter.png", "sizes": "96x96" }]
+      "url": "/shelters"
     }
   ],
   "prefer_related_applications": false
