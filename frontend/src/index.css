@@ -3251,3 +3251,192 @@ select, input, textarea { font-family: inherit; color: var(--text); }
 [dir="rtl"] .step-tracker__item::after { left: auto; right: 13px; }
 [dir="rtl"] .source-composer__tips li { padding-left: 0; padding-right: 18px; }
 [dir="rtl"] .source-composer__tips li::before { left: auto; right: 0; }
+
+/* ── 29. Weather Loader (cloud · sun · rain) ──────────────────── */
+.weather-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.weather-loader__label {
+  font-size: 0.8rem;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.loader-sun {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loaderSunSpin 18s linear infinite;
+}
+.loader-drop {
+  opacity: 0;
+  animation: loaderRain 1.3s ease-in infinite;
+}
+.loader-drop--2 { animation-delay: 0.30s; }
+.loader-drop--3 { animation-delay: 0.60s; }
+
+@keyframes loaderSunSpin { to { transform: rotate(360deg); } }
+@keyframes loaderRain {
+  0%   { transform: translateY(0);    opacity: 0; }
+  20%  { opacity: 1; }
+  75%  { opacity: 1; }
+  100% { transform: translateY(13px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-sun, .loader-drop { animation: none; }
+  .loader-drop { opacity: 0.6; }
+}
+
+/* ── 30. Capability / Feature Strip ───────────────────────────── */
+.feature-strip { margin: 16px 14px 0; }
+
+.feature-strip__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.feature-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+
+.feature-card__icon {
+  width: 36px; height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sky-dim);
+  border: 1px solid var(--sky-border);
+  border-radius: 50%;
+  color: var(--sky);
+  margin-bottom: 2px;
+}
+
+.feature-card__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.feature-card__desc {
+  font-size: 0.72rem;
+  color: var(--text-3);
+  line-height: 1.45;
+}
+
+/* ── 31. Site Footer ──────────────────────────────────────────── */
+.site-footer {
+  margin-top: 20px;
+  background: var(--sky-dark);
+  color: rgba(255,255,255,0.85);
+}
+
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 24px 20px;
+  padding: 28px 20px 24px;
+  max-width: var(--panel-max);
+  margin: 0 auto;
+}
+
+.site-footer__brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.site-footer__logo {
+  width: 26px; height: 26px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: var(--r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+}
+.site-footer__name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fff;
+}
+.site-footer__tagline {
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.7);
+}
+
+.site-footer__heading {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 10px;
+}
+
+.site-footer__contact {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.85);
+  padding: 3px 0;
+  text-decoration: none;
+}
+.site-footer__contact:hover { color: #fff; text-decoration: underline; }
+.site-footer__contact--ussd {
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.site-footer__links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.site-footer__links a {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.85);
+  text-decoration: none;
+}
+.site-footer__links a:hover { color: #fff; text-decoration: underline; }
+
+.site-footer__sources {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.site-footer__sources li {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.7);
+}
+
+.site-footer__bottom {
+  border-top: 1px solid rgba(255,255,255,0.14);
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.55);
+}
+
+/* Footer sits flush inside the dashboard info column */
+.dashboard { padding-bottom: 0; }
+.dashboard__info-col .site-footer { margin-top: 20px; }

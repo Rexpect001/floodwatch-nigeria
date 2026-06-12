@@ -16,6 +16,7 @@ import { alertsApi, type Alert } from '../../api/alertsApi'
 import { forecastsApi, type CurrentWeather } from '../../api/forecastsApi'
 import type { SupportedLang } from '../../i18n'
 import { GeoContext } from '../../App'
+import SiteFooter from '../SiteFooter'
 
 const FloodRiskMap = React.lazy(() => import('../Map/FloodRiskMap'))
 
@@ -221,6 +222,34 @@ function QuickActions() {
   )
 }
 
+// ── Capability strip (trust signals, FloodMapp-style) ─────────────
+function FeatureStrip() {
+  const features = [
+    { icon: MapPin,      title: 'LGA-level coverage',  desc: 'All 774 Local Government Areas, street-level relevance' },
+    { icon: CloudRain,   title: 'Real-time data',      desc: '24/7 monitoring, 365 days a year'                       },
+    { icon: Phone,       title: 'Works without internet', desc: 'Offline maps, SMS alerts and *384*FLOOD# USSD'       },
+    { icon: CheckCircle, title: 'Official sources',    desc: 'NEMA, NIHSA and NiMet verified feeds'                   },
+  ]
+  return (
+    <section className="feature-strip" aria-label="Platform capabilities">
+      <div className="feature-strip__grid">
+        {features.map(f => {
+          const Icon = f.icon
+          return (
+            <div key={f.title} className="feature-card">
+              <span className="feature-card__icon" aria-hidden>
+                <Icon size={17} strokeWidth={2} />
+              </span>
+              <span className="feature-card__title">{f.title}</span>
+              <span className="feature-card__desc">{f.desc}</span>
+            </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
 function AlertBanner({ alert }: { alert: Alert }) {
   const { t } = useTranslation()
   return (
@@ -412,6 +441,12 @@ export default function Dashboard({ lang }: Props) {
           <div className="dashboard__ussd-hint">
             No smartphone? <a href="tel:*384*3566*3%23" className="ussd-link">Dial *384*FLOOD#</a> on any phone.
           </div>
+
+          {/* Capability strip */}
+          <FeatureStrip />
+
+          {/* Site footer */}
+          <SiteFooter />
         </div>
       </div>
     </div>

@@ -14,21 +14,39 @@
     <!-- OpenStreetMap / Leaflet preconnect -->
     <link rel="preconnect" href="https://tile.openstreetmap.org" />
 
-    <!-- Prevent flash of unstyled content on slow networks -->
+    <!-- Pre-hydration splash: animated weather loader, no JS required -->
     <style>
       body { margin: 0; background: #F6F7F9; font-family: 'Segoe UI', system-ui, sans-serif; }
       #root { min-height: 100vh; }
       .initial-loader {
         display: flex; align-items: center; justify-content: center;
-        height: 100vh; flex-direction: column; gap: 16px; color: #3D4757;
-        font-size: 0.9rem;
+        height: 100vh; flex-direction: column; gap: 6px; color: #3D4757;
       }
-      .initial-loader__spinner {
-        width: 36px; height: 36px; border: 3px solid #D9DEE5;
-        border-top-color: #205493; border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+      .initial-loader__title {
+        font-size: 1rem; font-weight: 700; color: #163E6F; letter-spacing: -0.01em;
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
+      .initial-loader__sub { font-size: 0.78rem; color: #8A94A3; }
+      .loader-sun {
+        transform-box: fill-box; transform-origin: center;
+        animation: loaderSunSpin 18s linear infinite;
+      }
+      .loader-drop {
+        opacity: 0;
+        animation: loaderRain 1.3s ease-in infinite;
+      }
+      .loader-drop--2 { animation-delay: 0.30s; }
+      .loader-drop--3 { animation-delay: 0.60s; }
+      @keyframes loaderSunSpin { to { transform: rotate(360deg); } }
+      @keyframes loaderRain {
+        0%   { transform: translateY(0);    opacity: 0; }
+        20%  { opacity: 1; }
+        75%  { opacity: 1; }
+        100% { transform: translateY(13px); opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .loader-sun, .loader-drop { animation: none; }
+        .loader-drop { opacity: 0.6; }
+      }
     </style>
 
     <title>HazardWatch Nigeria</title>
@@ -37,8 +55,35 @@
     <div id="root">
       <!-- Shown before React hydrates -->
       <div class="initial-loader" aria-label="Loading HazardWatch Nigeria" role="status">
-        <div class="initial-loader__spinner" aria-hidden="true"></div>
-        <span>HazardWatch Nigeria…</span>
+        <svg width="116" height="112" viewBox="0 0 110 106" fill="none" aria-hidden="true">
+          <!-- Sun (peeks out behind the cloud) -->
+          <g class="loader-sun" stroke="#B47910" stroke-width="2.4" stroke-linecap="round">
+            <circle cx="82" cy="24" r="8.5" fill="#FFF7E6" />
+            <line x1="82" y1="7"  x2="82" y2="11" />
+            <line x1="82" y1="37" x2="82" y2="41" />
+            <line x1="65" y1="24" x2="69" y2="24" />
+            <line x1="95" y1="24" x2="99" y2="24" />
+            <line x1="70" y1="12" x2="73" y2="15" />
+            <line x1="91" y1="33" x2="94" y2="36" />
+            <line x1="94" y1="12" x2="91" y2="15" />
+            <line x1="73" y1="33" x2="70" y2="36" />
+          </g>
+          <!-- Cloud -->
+          <path
+            d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"
+            transform="translate(8 10) scale(3.6)"
+            fill="#FFFFFF" stroke="#205493" stroke-width="0.62"
+            stroke-linecap="round" stroke-linejoin="round"
+          />
+          <!-- Rain -->
+          <g stroke="#2A6CB8" stroke-width="3" stroke-linecap="round">
+            <line class="loader-drop loader-drop--1" x1="36" y1="88" x2="36" y2="95" />
+            <line class="loader-drop loader-drop--2" x1="54" y1="88" x2="54" y2="95" />
+            <line class="loader-drop loader-drop--3" x1="72" y1="88" x2="72" y2="95" />
+          </g>
+        </svg>
+        <span class="initial-loader__title">HazardWatch Nigeria</span>
+        <span class="initial-loader__sub">Loading early warning data…</span>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

@@ -27,6 +27,7 @@ import {
 
 import { SUPPORTED_LANGUAGES, type SupportedLang } from './i18n'
 import type { Alert } from './api/alertsApi'
+import WeatherLoader from './components/WeatherLoader'
 
 // ── Geolocation context ──────────────────────────────────────────
 export interface UserLocation {
@@ -340,9 +341,8 @@ function VoiceGate() {
 
 function PageLoader() {
   return (
-    <div className="page-loader" role="status" aria-live="polite">
-      <div className="page-loader__spinner" aria-hidden />
-      <span className="sr-only">Loading…</span>
+    <div className="page-loader">
+      <WeatherLoader />
     </div>
   )
 }
